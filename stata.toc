@@ -1,0 +1,6 @@
+v 1.0.0
+d MCDA: Multi-Criteria Decision Analysis Toolkit
+d
+d Distribution-Date: 20240522
+d
+p mcda_topsis
