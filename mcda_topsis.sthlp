@@ -4,6 +4,7 @@
 {viewerjumpto "Syntax" "mcda_topsis##syntax"}{...}
 {viewerjumpto "Description" "mcda_topsis##description"}{...}
 {viewerjumpto "Options" "mcda_topsis##options"}{...}
+{viewerjumpto "Installation" "mcda_topsis##installation"}{...}
 {viewerjumpto "Examples" "mcda_topsis##examples"}{...}
 {title:Title}
 
@@ -72,6 +73,21 @@ benefit variables contribute positively to the score.
 {opt export_template(filename)} creates an Excel file containing all numeric variables (or the variables 
 specified in {varlist}) with columns for weights, direction, domain, and active status. This template 
 can be filled by the user and then used with the {cmd:using} syntax.
+
+
+{marker installation}{...}
+{title:Installation}
+
+{pstd}
+To install via GitHub:
+
+{phang2}{cmd:. net install github, from("https://haghish.github.io/github/")}{p_end}
+{phang2}{cmd:. github install emawbgit/MCDA}{p_end}
+
+{pstd}
+To install via net install:
+
+{phang2}{cmd:. net install mcda_topsis, from("https://raw.githubusercontent.com/emawbgit/MCDA/main/")}{p_end}
 
 
 {marker examples}{...}
