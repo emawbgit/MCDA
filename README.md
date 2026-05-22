@@ -1,6 +1,4 @@
-# MCDA Toolkit for Stata
-
-This repository contains Stata commands for Multi-Criteria Decision Analysis (MCDA). 
+# MCDA Topsis command for Stata
 
 ## Aim
 The goal of this toolkit is to provide Stata users with robust, user-friendly tools to perform Multi-Criteria Decision Analysis. These methods are essential for ranking or selecting alternatives when multiple, often conflicting, criteria must be considered.
