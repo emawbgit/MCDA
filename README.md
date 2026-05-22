@@ -1,7 +1,9 @@
-# MCDA Topsis command for Stata
+# MCDA Toolkit for Stata
+
+This repository contains Stata commands for Multi-Criteria Decision Analysis (MCDA). 
 
 ## Aim
-The goal of this command is to provide Stata users with robust, user-friendly tools to perform Multi-Criteria Decision Analysis. These methods are essential for ranking or selecting alternatives when multiple, often conflicting, criteria must be considered.
+The goal of this toolkit is to provide Stata users with robust, user-friendly tools to perform Multi-Criteria Decision Analysis. These methods are essential for ranking or selecting alternatives when multiple, often conflicting, criteria must be considered.
 
 ## Methodology: TOPSIS
 The primary command in this toolkit, `mcda_topsis`, implements the **Technique for Order of Preference by Similarity to Ideal Solution (TOPSIS)**. 
@@ -30,13 +32,12 @@ The `mcda_topsis` command processes a set of numeric variables and outputs ranki
 ### Key Features:
 -   **Min-Max Normalization**: Automatically standardizes criteria to a 0-1 scale.
 -   **Domain Weighting**: Allows weights to be assigned to groups of variables (domains), which are then automatically split among members.
--   **Template-Driven Workflow**: Users can export a CSV/Excel template, fill in parameters, and run the analysis directly from the file.
 -   **Flexible Directionality**: Easily specify "benefit" criteria (higher is better) vs "cost" criteria (lower is better).
 
 ## Syntax
 
 ```stata
-mcda_topsis [varlist] [using filename] [if] [in] [, options]
+mcda_topsis varlist [if] [in] [, options]
 ```
 
 ### Options
@@ -46,10 +47,8 @@ mcda_topsis [varlist] [using filename] [if] [in] [, options]
 -   `direction(numlist)`: Specify direction for each variable (1 for benefit, -1 for cost).
 -   `domains(numlist)`: Specify domain IDs to split weights across groups of variables.
 
-#### Output & Configuration
+#### Output
 -   `generate(names)`: Specify names for the generated score and rank variables (default: `topsis_score`, `topsis_rank`).
--   `export_template(filename)`: Export a blank CSV or Excel template with the dataset's variables.
--   `replace`: Overwrite existing files when exporting.
 
 ## Examples
 
@@ -65,18 +64,11 @@ In this example, a weight of 0.5 is assigned to Domain 1 (containing `mpg` and `
 mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)
 ```
 
-### 3. Template Workflow (CSV)
-```stata
-mcda_topsis mpg price weight, export_template("criteria.csv") replace
-* (Edit criteria.csv to set parameters)
-mcda_topsis using "criteria.csv"
-```
-
 ## Reporting Bugs
 If you encounter any issues or bugs, please open an issue on the [GitHub repository](https://github.com/emawbgit/MCDA/issues). Please include your Stata version and a sample of your data.
 
 ## Author
-Emanuele Clemente (With the help of Jules)
+Jules (MCDA Toolkit Development)
 
 ## License
 MIT
