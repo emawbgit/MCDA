@@ -1,0 +1,9 @@
+v 1.0.0
+d 'MCDA_TOPSIS': Multi-Criteria Decision Analysis using TOPSIS
+d
+d mcda_topsis implements the Technique for Order of Preference by Similarity to Ideal Solution (TOPSIS).
+d
+d Distribution-Date: 20240522
+d
+f mcda_topsis.ado
+f mcda_topsis.sthlp
