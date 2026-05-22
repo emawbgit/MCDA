@@ -1,117 +1,25 @@
-*! version 1.0.3  22may2024
+*! version 1.1.0  22may2024
 program define mcda_topsis, rclass
     version 16.0
 
-    syntax [varlist(numeric default=none)] [using/] [if] [in] [, ///
+    syntax varlist(numeric) [if] [in] [, ///
         Weights(numlist) ///
         Direction(numlist) ///
         Domains(numlist) ///
         GENerate(string) ///
-        Export_template(string) ///
-        REPlace ///
     ]
 
-    * --- Export Template Mode ---
-    if ("`export_template'" != "") {
-        export_template `varlist', file("`export_template'") `replace'
-        exit
-    }
-
     * --- Data Preparation ---
-    marksample touse, novarlist
+    marksample touse
+    markout `touse' `varlist'
     
-    local criteria ""
-    
-    * --- Handle Template Ingestion (Excel or CSV) ---
-    if ("`using'" != "") {
-        preserve
-        local ext = lower(substr("`using'", -4, .))
-        if ("`ext'" == ".csv") {
-            qui import delimited "`using'", varnames(1) clear
-        }
-        else {
-            qui import excel "`using'", firstrow clear
-        }
-        
-        * Validate columns: variable, weight, direction
-        foreach col in variable weight direction {
-            capture confirm variable `col'
-            if (_rc) {
-                di as error "Template must contain a '`col'' column."
-                exit 198
-            }
-        }
-        
-        * Check for 'active' column if it exists
-        capture confirm variable active
-        if (!_rc) {
-            qui keep if active == 1 | active == "1" | lower(active) == "yes"
-        }
-        
-        * Get criteria and weights into locals before restoring
-        local count = _N
-        if (`count' == 0) {
-            di as error "No active criteria found in template."
-            exit 198
-        }
-        
-        forvalues i = 1/`count' {
-            local v_`i' = variable[`i']
-            local w_`i' = weight[`i']
-            local d_`i' = direction[`i']
-            
-            capture confirm variable domain
-            if (!_rc) {
-                local dom_`i' = domain[`i']
-            }
-            else {
-                local dom_`i' ""
-            }
-        }
-        
-        restore
-        
-        local criteria_list ""
-        local w_list ""
-        local dir_list ""
-        local dom_list ""
-        local has_domains 0
-        
-        forvalues i = 1/`count' {
-            local v `v_`i''
-            capture confirm variable `v'
-            if (_rc) {
-                di as error "Variable '`v'' specified in template not found in dataset."
-                exit 111
-            }
-            
-            local criteria_list "`criteria_list' `v'"
-            local w_list "`w_list' `w_`i''"
-            local dir_list "`dir_list' `d_`i''"
-            local dom_list "`dom_list' `dom_`i''"
-            if ("`dom_`i''" != "") local has_domains 1
-        }
-        
-        local criteria "`criteria_list'"
-        local weights "`w_list'"
-        local direction "`dir_list'"
-        if (`has_domains') local domains "`dom_list'"
-    }
-    else {
-        local criteria "`varlist'"
-        if ("`criteria'" == "") {
-            di as error "Criteria variables must be specified."
-            exit 198
-        }
-    }
-    
-    * Finalize touse with actual criteria
-    markout `touse' `criteria'
     qui count if `touse'
     if (r(N) == 0) {
         di as error "No observations remaining after handling missing values."
         exit 2000
     }
+
+    local criteria "`varlist'"
 
     * --- Validation and Weight Processing ---
     local n_crit : word count `criteria'
@@ -127,7 +35,7 @@ program define mcda_topsis, rclass
     local n_w : word count `weights'
     local n_d : word count `direction'
     
-    if (`n_w' != `n_crit') & ("`using'" == "") & ("`domains'" == "") {
+    if (`n_w' != `n_crit') & ("`domains'" == "") {
         di as error "Number of weights (`n_w') does not match number of criteria (`n_crit')."
         exit 198
     }
@@ -202,60 +110,6 @@ program define mcda_topsis, rclass
 
 end
 
-* --- Helper Program: Export Template ---
-program define export_template
-    syntax [varlist(numeric)] , file(string) [replace]
-    
-    preserve
-    if ("`varlist'" == "") {
-        unab varlist : _all
-        local numeric_vars ""
-        foreach v of local varlist {
-            capture confirm numeric variable `v'
-            if (!_rc) {
-                local numeric_vars "`numeric_vars' `v'"
-            }
-        }
-        local varlist "`numeric_vars'"
-    }
-    
-    clear
-    local n : word count `varlist'
-    if (`n' == 0) {
-        di as error "No numeric variables found to export."
-        exit 111
-    }
-    
-    set obs `n'
-    gen variable = ""
-    gen weight = 1
-    gen direction = 1
-    gen domain = ""
-    gen active = 1
-    
-    forvalues i = 1/`n' {
-        replace variable = "`: word `i' of `varlist''" in `i'
-    }
-    
-    local ext = lower(substr("`file'", -4, .))
-    if ("`ext'" == ".csv") {
-        capture noi export delimited using "`file'", `replace'
-    }
-    else {
-        capture noi export excel using "`file'", firstrow(variables) `replace'
-    }
-    
-    if (_rc) {
-        di as error "Error: Could not save file '`file''."
-        di as error "1. Check if the file is currently open in another program (like Excel)."
-        di as error "2. Ensure you have write permissions for the directory."
-        di as error "3. Try using a .csv extension if Excel export is not working: export_template(\"template.csv\")"
-        exit 603
-    }
-    di as text "Template exported to `file'"
-    restore
-end
-
 * --- Mata Functions ---
 mata:
 void split_domain_weights(string scalar w_str, string scalar d_str, string scalar c_str) {
@@ -277,7 +131,6 @@ void split_domain_weights(string scalar w_str, string scalar d_str, string scala
         idx = (doms :== cur_dom)
         count = sum(idx)
         
-        // Find the weight assigned to this domain 
         p = selectindex(idx)[1]
         dom_w = w[p]
         
