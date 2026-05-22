@@ -58,5 +58,8 @@ mcda_topsis varlist [if] [in], weights(numlist) direction(numlist) [options]
    mcda_topsis using "my_config.xlsx"
    ```
 
+## Reporting Bugs
+If you run into any issues or bugs, please open an issue on the GitHub repository. Be sure to include your exact Stata version, the command you ran, and a sample of your data (or ideally, reproduce the bug using auto.dta).
+
 ## License
 MIT
