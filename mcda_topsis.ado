@@ -1,4 +1,4 @@
-*! version 1.0.1  22may2024
+*! version 1.0.2  22may2024
 program define mcda_topsis, rclass
     version 16.0
 
@@ -12,26 +12,25 @@ program define mcda_topsis, rclass
     ]
 
     * --- Export Template Mode ---
-    if "`export_template'" != "" {
+    if ("`export_template'" != "") {
         export_template `varlist', file("`export_template'") `replace'
         exit
     }
 
     * --- Data Preparation ---
-    marksample touse
-
-    tempname W_mat D_mat
+    marksample touse, novarlist
+    
     local criteria ""
     
     * --- Handle Excel Template Ingestion ---
-    if "`using'" != "" {
+    if ("`using'" != "") {
         preserve
         qui import excel "`using'", firstrow clear
         
         * Validate columns: variable, weight, direction
         foreach col in variable weight direction {
             capture confirm variable `col'
-            if _rc {
+            if (_rc) {
                 di as error "Excel template must contain a '`col'' column."
                 exit 198
             }
@@ -39,19 +38,24 @@ program define mcda_topsis, rclass
         
         * Check for 'active' column if it exists
         capture confirm variable active
-        if !_rc {
+        if (!_rc) {
             qui keep if active == 1 | active == "1" | lower(active) == "yes"
         }
         
         * Get criteria and weights into locals before restoring
         local count = _N
+        if (`count' == 0) {
+            di as error "No active criteria found in Excel template."
+            exit 198
+        }
+        
         forvalues i = 1/`count' {
             local v_`i' = variable[`i']
             local w_`i' = weight[`i']
             local d_`i' = direction[`i']
             
             capture confirm variable domain
-            if !_rc {
+            if (!_rc) {
                 local dom_`i' = domain[`i']
             }
             else {
@@ -70,7 +74,7 @@ program define mcda_topsis, rclass
         forvalues i = 1/`count' {
             local v `v_`i''
             capture confirm variable `v'
-            if _rc {
+            if (_rc) {
                 di as error "Variable '`v'' specified in Excel not found in dataset."
                 exit 111
             }
@@ -79,26 +83,34 @@ program define mcda_topsis, rclass
             local w_list "`w_list' `w_`i''"
             local dir_list "`dir_list' `d_`i''"
             local dom_list "`dom_list' `dom_`i''"
-            if "`dom_`i''" != "" local has_domains 1
+            if ("`dom_`i''" != "") local has_domains 1
         }
         
         local criteria "`criteria_list'"
         local weights "`w_list'"
         local direction "`dir_list'"
-        if `has_domains' local domains "`dom_list'"
+        if (`has_domains') local domains "`dom_list'"
     }
     else {
         local criteria "`varlist'"
-        if "`criteria'" == "" {
+        if ("`criteria'" == "") {
             di as error "Criteria variables must be specified."
             exit 198
         }
+    }
+    
+    * Finalize touse with actual criteria
+    markout `touse' `criteria'
+    qui count if `touse'
+    if (r(N) == 0) {
+        di as error "No observations remaining after handling missing values."
+        exit 2000
     }
 
     * --- Validation and Weight Processing ---
     local n_crit : word count `criteria'
     
-    if "`weights'" == "" {
+    if ("`weights'" == "") {
         * Default to equal weights
         local weights ""
         forvalues i = 1/`n_crit' {
@@ -119,7 +131,7 @@ program define mcda_topsis, rclass
         exit 198
     }
     
-    if "`direction'" == "" {
+    if ("`direction'" == "") {
         local direction ""
         forvalues i = 1/`n_crit' {
             local direction "`direction' 1"
@@ -127,7 +139,7 @@ program define mcda_topsis, rclass
     }
 
     * --- Domain Weight Splitting Logic ---
-    if "`domains'" != "" {
+    if ("`domains'" != "") {
         * If domains are provided, we need to adjust weights
         mata: split_domain_weights("`weights'", "`domains'", "`criteria'")
         local weights `r(weights)'
@@ -140,12 +152,12 @@ program define mcda_topsis, rclass
     mata: do_topsis("`criteria'", "`weights'", "`direction'", "`touse'", "`score'")
 
     * --- Output Generation ---
-    if "`generate'" != "" {
+    if ("`generate'" != "") {
         local g1 : word 1 of `generate'
         local g2 : word 2 of `generate'
         
-        if "`g1'" == "" local g1 "topsis_score"
-        if "`g2'" == "" local g2 "topsis_rank"
+        if ("`g1'" == "") local g1 "topsis_score"
+        if ("`g2'" == "") local g2 "topsis_rank"
         
         capture drop `g1'
         qui gen double `g1' = `score' if `touse'
@@ -174,7 +186,7 @@ program define mcda_topsis, rclass
     preserve
     qui keep if `touse'
     gsort -`score'
-    if "`generate'" != "" {
+    if ("`generate'" != "") {
         list `criteria' `g1' `g2' in 1/10
     }
     else {
@@ -189,12 +201,12 @@ program define export_template
     syntax [varlist(numeric)] , file(string) [replace]
     
     preserve
-    if "`varlist'" == "" {
+    if ("`varlist'" == "") {
         unab varlist : _all
         local numeric_vars ""
         foreach v of local varlist {
             capture confirm numeric variable `v'
-            if !_rc {
+            if (!_rc) {
                 local numeric_vars "`numeric_vars' `v'"
             }
         }
@@ -203,6 +215,11 @@ program define export_template
     
     clear
     local n : word count `varlist'
+    if (`n' == 0) {
+        di as error "No numeric variables found to export."
+        exit 111
+    }
+    
     set obs `n'
     gen variable = ""
     gen weight = 1
@@ -214,7 +231,11 @@ program define export_template
         replace variable = "`: word `i' of `varlist''" in `i'
     }
     
-    export excel using "`file'", firstrow(variables) `replace'
+    capture noi export excel using "`file'", firstrow(variables) `replace'
+    if (_rc) {
+        di as error "Error: Could not save Excel file '`file''. Ensure the file is not open and you have write permissions."
+        exit 603
+    }
     di as text "Template exported to `file'"
     restore
 end
@@ -226,6 +247,7 @@ void split_domain_weights(string scalar w_str, string scalar d_str, string scala
     string rowvector doms, unique_doms
     real scalar i, j, p, count, dom_w
     real rowvector idx, final_w
+    string scalar cur_dom
     
     w = strtoreal(tokens(w_str))
     doms = tokens(d_str)
@@ -234,14 +256,12 @@ void split_domain_weights(string scalar w_str, string scalar d_str, string scala
     final_w = J(1, cols(doms), 0)
     
     for (i=1; i<=cols(unique_doms); i++) {
-        string scalar cur_dom
         cur_dom = unique_doms[i]
         
         idx = (doms :== cur_dom)
         count = sum(idx)
         
         // Find the weight assigned to this domain 
-        // (Taking the weight from the first occurrence in the input)
         p = selectindex(idx)[1]
         dom_w = w[p]
         
