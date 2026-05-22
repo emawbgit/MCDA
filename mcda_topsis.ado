@@ -1,4 +1,4 @@
-*! version 1.0.2  22may2024
+*! version 1.0.3  22may2024
 program define mcda_topsis, rclass
     version 16.0
 
@@ -22,16 +22,22 @@ program define mcda_topsis, rclass
     
     local criteria ""
     
-    * --- Handle Excel Template Ingestion ---
+    * --- Handle Template Ingestion (Excel or CSV) ---
     if ("`using'" != "") {
         preserve
-        qui import excel "`using'", firstrow clear
+        local ext = lower(substr("`using'", -4, .))
+        if ("`ext'" == ".csv") {
+            qui import delimited "`using'", varnames(1) clear
+        }
+        else {
+            qui import excel "`using'", firstrow clear
+        }
         
         * Validate columns: variable, weight, direction
         foreach col in variable weight direction {
             capture confirm variable `col'
             if (_rc) {
-                di as error "Excel template must contain a '`col'' column."
+                di as error "Template must contain a '`col'' column."
                 exit 198
             }
         }
@@ -45,7 +51,7 @@ program define mcda_topsis, rclass
         * Get criteria and weights into locals before restoring
         local count = _N
         if (`count' == 0) {
-            di as error "No active criteria found in Excel template."
+            di as error "No active criteria found in template."
             exit 198
         }
         
@@ -75,7 +81,7 @@ program define mcda_topsis, rclass
             local v `v_`i''
             capture confirm variable `v'
             if (_rc) {
-                di as error "Variable '`v'' specified in Excel not found in dataset."
+                di as error "Variable '`v'' specified in template not found in dataset."
                 exit 111
             }
             
@@ -231,9 +237,19 @@ program define export_template
         replace variable = "`: word `i' of `varlist''" in `i'
     }
     
-    capture noi export excel using "`file'", firstrow(variables) `replace'
+    local ext = lower(substr("`file'", -4, .))
+    if ("`ext'" == ".csv") {
+        capture noi export delimited using "`file'", `replace'
+    }
+    else {
+        capture noi export excel using "`file'", firstrow(variables) `replace'
+    }
+    
     if (_rc) {
-        di as error "Error: Could not save Excel file '`file''. Ensure the file is not open and you have write permissions."
+        di as error "Error: Could not save file '`file''."
+        di as error "1. Check if the file is currently open in another program (like Excel)."
+        di as error "2. Ensure you have write permissions for the directory."
+        di as error "3. Try using a .csv extension if Excel export is not working: export_template(\"template.csv\")"
         exit 603
     }
     di as text "Template exported to `file'"
