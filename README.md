@@ -78,7 +78,7 @@ mcda_topsis using "criteria.csv"
 If you encounter any issues or bugs, please open an issue on the [GitHub repository](https://github.com/emawbgit/MCDA/issues). Please include your Stata version and a sample of your data.
 
 ## Author
-Jules (MCDA Toolkit Development)
+Emanuele Clemente (With the help of Jules)
 
 ## License
 MIT
