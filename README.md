@@ -64,7 +64,7 @@ In this example, a weight of 0.5 is assigned to Domain 1 (containing `mpg` and `
 mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)
 ```
 
-## Reporting Bugs
+## Reporting Bugs or Desiderata
 If you encounter any issues or bugs, please open an issue on the [GitHub repository](https://github.com/emawbgit/MCDA/issues). Please include your Stata version and a sample of your data.
 
 ## Author
