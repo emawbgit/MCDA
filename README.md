@@ -6,7 +6,7 @@ This repository contains Stata commands for Multi-Criteria Decision Analysis (MC
 The goal of this toolkit is to provide Stata users with robust, user-friendly tools to perform Multi-Criteria Decision Analysis. These methods are essential for ranking or selecting alternatives when multiple, often conflicting, criteria must be considered.
 
 ## Methodology: TOPSIS
-The primary command in this toolkit, `mcda_topsis`, implements the **Technique for Order of Preference by Similarity to Ideal Solution (TOPSIS)**. 
+The primary command in this toolkit, `mcda_topsis`, implements the **Technique for Order of Preference by Similarity to Ideal Solution (TOPSIS)** (Hwang and Yoon, 1981). 
 
 TOPSIS ranks alternatives based on their geometric distance from both the Positive Ideal Solution (PIS) and the Negative Ideal Solution (NIS). The chosen alternative should have the shortest distance from the PIS and the farthest distance from the NIS.
 
@@ -68,7 +68,7 @@ mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)
 If you encounter any issues or bugs, please open an issue on the [GitHub repository](https://github.com/emawbgit/MCDA/issues). Please include your Stata version and a sample of your data.
 
 ## Author
-Jules (MCDA Toolkit Development)
+Emanuele Clemente
 
 ## License
 MIT
