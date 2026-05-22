@@ -228,8 +228,8 @@ void split_domain_weights(string scalar w_str, string scalar d_str, string scala
         real scalar count
         count = sum(idx)
         
-        * Find the weight assigned to this domain 
-        * (Taking the weight from the first occurrence in the input)
+        // Find the weight assigned to this domain 
+        // (Taking the weight from the first occurrence in the input)
         real scalar dom_w
         pointer scalar p
         p = selectindex(idx)[1]
@@ -255,7 +255,7 @@ void do_topsis(string scalar varlist, string scalar weight_str, string scalar di
     w = strtoreal(tokens(weight_str))
     directions = strtoreal(tokens(dir_str))
     
-    * Normalize (Min-Max)
+    // Normalize (Min-Max)
     max_x = colmax(X)
     min_x = colmin(X)
     
@@ -276,24 +276,24 @@ void do_topsis(string scalar varlist, string scalar weight_str, string scalar di
         }
     }
     
-    * Weighting
+    // Weighting
     Y = Y * diag(w)
     
-    * Ideal Solutions
-    * Since we already adjusted for direction in normalization (cost becomes benefit),
-    * the PIS is now always the max of the normalized matrix and NIS is min.
+    // Ideal Solutions
+    // Since we already adjusted for direction in normalization (cost becomes benefit),
+    // the PIS is now always the max of the normalized matrix and NIS is min.
     real rowvector pis, nis
     pis = colmax(Y)
     nis = colmin(Y)
     
-    * Distances
+    // Distances
     d_plus = sqrt(rowsum((Y :- pis):^2))
     d_minus = sqrt(rowsum((Y :- nis):^2))
     
-    * Relative Closeness
+    // Relative Closeness
     score = d_minus :/ (d_plus + d_minus)
     
-    * Fix cases where denominator is zero (all distances zero)
+    // Fix cases where denominator is zero (all distances zero)
     for (i=1; i<=rows(score); i++) {
         if ( (d_plus[i] + d_minus[i]) == 0 ) score[i] = 0
     }
