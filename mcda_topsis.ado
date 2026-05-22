@@ -142,7 +142,7 @@ void split_domain_weights(string scalar w_str, string scalar d_str, string scala
     }
     
     st_rclear()
-    st_global("r(weights)", invtokens(stroreal(final_w)))
+    st_global("r(weights)", invtokens(strofreal(final_w)))
 }
 
 void do_topsis(string scalar varlist, string scalar weight_str, string scalar dir_str, string scalar touse, string scalar scorevar) {
