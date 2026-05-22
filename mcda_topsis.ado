@@ -109,12 +109,12 @@ program define mcda_topsis, rclass
     local n_w : word count `weights'
     local n_d : word count `direction'
     
-    if `n_w' != `n_crit' && "`using'" == "" && "`domains'" == "" {
+    if (`n_w' != `n_crit') & ("`using'" == "") & ("`domains'" == "") {
         di as error "Number of weights (`n_w') does not match number of criteria (`n_crit')."
         exit 198
     }
     
-    if `n_d' != `n_crit' && "`direction'" != "" {
+    if (`n_d' != `n_crit') & ("`direction'" != "") {
         di as error "Number of directions (`n_d') does not match number of criteria (`n_crit')."
         exit 198
     }
