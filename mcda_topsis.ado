@@ -1,4 +1,4 @@
-*! version 1.0.0  22may2024
+*! version 1.0.1  22may2024
 program define mcda_topsis, rclass
     version 16.0
 
@@ -100,6 +100,7 @@ program define mcda_topsis, rclass
     
     if "`weights'" == "" {
         * Default to equal weights
+        local weights ""
         forvalues i = 1/`n_crit' {
             local weights "`weights' 1"
         }
@@ -109,16 +110,17 @@ program define mcda_topsis, rclass
     local n_d : word count `direction'
     
     if `n_w' != `n_crit' && "`using'" == "" && "`domains'" == "" {
-        di as error "Number of weights must match number of variables."
+        di as error "Number of weights (`n_w') does not match number of criteria (`n_crit')."
         exit 198
     }
     
     if `n_d' != `n_crit' && "`direction'" != "" {
-        di as error "Number of directions must match number of variables."
+        di as error "Number of directions (`n_d') does not match number of criteria (`n_crit')."
         exit 198
     }
     
     if "`direction'" == "" {
+        local direction ""
         forvalues i = 1/`n_crit' {
             local direction "`direction' 1"
         }
@@ -145,18 +147,22 @@ program define mcda_topsis, rclass
         if "`g1'" == "" local g1 "topsis_score"
         if "`g2'" == "" local g2 "topsis_rank"
         
+        capture drop `g1'
         qui gen double `g1' = `score' if `touse'
         label variable `g1' "TOPSIS Relative Closeness Score"
         
+        capture drop `g2'
         qui egen long `g2' = rank(-`score') if `touse', unique
         label variable `g2' "TOPSIS Rank"
         
         di as text "Generated variables: `g1', `g2'"
     }
     else {
+        capture drop topsis_score
         qui gen double topsis_score = `score' if `touse'
         label variable topsis_score "TOPSIS Relative Closeness Score"
         
+        capture drop topsis_rank
         qui egen long topsis_rank = rank(-topsis_score) if `touse', unique
         label variable topsis_rank "TOPSIS Rank"
         
@@ -165,8 +171,16 @@ program define mcda_topsis, rclass
 
     * --- Display Summary ---
     di _n as text "TOPSIS Results Summary (Top 10)"
+    preserve
+    qui keep if `touse'
     gsort -`score'
-    list `criteria' topsis_score topsis_rank in 1/10 if `touse'
+    if "`generate'" != "" {
+        list `criteria' `g1' `g2' in 1/10
+    }
+    else {
+        list `criteria' topsis_score topsis_rank in 1/10
+    }
+    restore
 
 end
 
@@ -208,30 +222,26 @@ end
 * --- Mata Functions ---
 mata:
 void split_domain_weights(string scalar w_str, string scalar d_str, string scalar c_str) {
-    real rowvector w, d_counts
+    real rowvector w
     string rowvector doms, unique_doms
+    real scalar i, j, p, count, dom_w
+    real rowvector idx, final_w
     
     w = strtoreal(tokens(w_str))
     doms = tokens(d_str)
     unique_doms = uniqrows(doms')'
     
-    real rowvector final_w
     final_w = J(1, cols(doms), 0)
     
     for (i=1; i<=cols(unique_doms); i++) {
         string scalar cur_dom
         cur_dom = unique_doms[i]
         
-        real rowvector idx
         idx = (doms :== cur_dom)
-        
-        real scalar count
         count = sum(idx)
         
         // Find the weight assigned to this domain 
         // (Taking the weight from the first occurrence in the input)
-        real scalar dom_w
-        pointer scalar p
         p = selectindex(idx)[1]
         dom_w = w[p]
         
@@ -247,9 +257,10 @@ void split_domain_weights(string scalar w_str, string scalar d_str, string scala
 }
 
 void do_topsis(string scalar varlist, string scalar weight_str, string scalar dir_str, string scalar touse, string scalar scorevar) {
-    real matrix X, W, Y
-    real rowvector w, directions, max_x, min_x
+    real matrix X, Y
+    real rowvector w, directions, max_x, min_x, pis, nis
     real colvector d_plus, d_minus, score
+    real scalar i, j, range
     
     X = st_data(., varlist, touse)
     w = strtoreal(tokens(weight_str))
@@ -261,7 +272,6 @@ void do_topsis(string scalar varlist, string scalar weight_str, string scalar di
     
     Y = J(rows(X), cols(X), .)
     for (j=1; j<=cols(X); j++) {
-        real scalar range
         range = max_x[j] - min_x[j]
         if (range == 0) {
             Y[., j] = J(rows(X), 1, 0)
@@ -280,9 +290,6 @@ void do_topsis(string scalar varlist, string scalar weight_str, string scalar di
     Y = Y * diag(w)
     
     // Ideal Solutions
-    // Since we already adjusted for direction in normalization (cost becomes benefit),
-    // the PIS is now always the max of the normalized matrix and NIS is min.
-    real rowvector pis, nis
     pis = colmax(Y)
     nis = colmin(Y)
     
@@ -293,7 +300,7 @@ void do_topsis(string scalar varlist, string scalar weight_str, string scalar di
     // Relative Closeness
     score = d_minus :/ (d_plus + d_minus)
     
-    // Fix cases where denominator is zero (all distances zero)
+    // Fix cases where denominator is zero
     for (i=1; i<=rows(score); i++) {
         if ( (d_plus[i] + d_minus[i]) == 0 ) score[i] = 0
     }
