@@ -35,9 +35,10 @@ The `mcda_topsis` command processes a set of numeric variables and outputs ranki
 -   **Flexible Directionality**: Easily specify "benefit" criteria (higher is better) vs "cost" criteria (lower is better).
 -   **Missing values**: observations with a missing criterion are excluded and reported (`r(N_excluded)`), never ranked silently.
 -   **Ties**: rank 1 is the highest score; tied scores share the same rank.
+-   **Input rules**: each criterion may be entered only once; weights (after domain splitting) must sum to 1, with a 0.01 tolerance for rounding.
 
 ## Dialog box
-Type `db mcda_topsis` for a point-and-click dialog: one row per criterion (variable drop-down, weight, **Cost** tick box), up to 20 criteria, plus an Options tab for `if`, domains and output names. To add it to the **User > Statistics** menu, put this in your `profile.do`:
+Type `db mcda_topsis` for a point-and-click dialog: one row per criterion (variable drop-down, weight, **Cost** tick box), up to 20 criteria; rule violations (repeated variable, weights not summing to 1) appear in an error window on OK/Submit; plus an Options tab for `if`, domains and output names. To add it to the **User > Statistics** menu, put this in your `profile.do`:
 
 ```stata
 window menu append item "stUserStatistics" "MCDA: TOPSIS ranking" "db mcda_topsis"
@@ -78,7 +79,7 @@ mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)
 `r(N)`, `r(N_excluded)`, `r(weights)` (after domain splitting), `r(direction)`.
 
 ## Version history
--   **1.3.0** (2026-11-19): `db mcda_topsis` dialog box.
+-   **1.3.0** (2026-11-19): `db mcda_topsis` dialog box; each criterion only once; weights must sum to 1 (±0.01; default 1/k); dialog shows rule violations in an error window.
 -   **1.2.0** (2026-11-19): report observations excluded for missing criteria; validate weights, directions and domain IDs (one per criterion); tied scores share a rank instead of being broken arbitrarily; summary table no longer fails with fewer than 10 observations; stored results.
 -   **1.1.0** (2024-05-22): domain weighting.
 
