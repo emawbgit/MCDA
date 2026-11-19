@@ -1,11 +1,12 @@
-*! version 1.3.0  19nov2026
+*! version 1.3.1  19nov2026
+*! Emanuele Clemente, University of Bari "Aldo Moro", eclemente@worldbank.org
 program define mcda_topsis, rclass
     version 16.0
 
     syntax varlist(numeric) [if] [in] [, ///
         Weights(numlist) ///
         Direction(numlist integer) ///
-        Domains(numlist) ///
+        DOMains(numlist) /// "d" abbreviates direction() only
         GENerate(string) ///
         FROMDIALOG /// undocumented: set by mcda_topsis.dlg so errors also pop up
     ]
