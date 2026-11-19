@@ -1,4 +1,4 @@
-*! version 1.2.0  19nov2026
+*! version 1.3.0  19nov2026
 program define mcda_topsis, rclass
     version 16.0
 
@@ -7,7 +7,14 @@ program define mcda_topsis, rclass
         Direction(numlist integer) ///
         Domains(numlist) ///
         GENerate(string) ///
+        FROMDIALOG /// undocumented: set by mcda_topsis.dlg so errors also pop up
     ]
+
+    * --- Validation of criteria ---
+    local dups : list dups varlist
+    if ("`dups'" != "") {
+        _mcda_err 198 "Each criterion may be entered only once; repeated: `: list uniq dups'." `fromdialog'
+    }
 
     * --- Data Preparation ---
     * Rows with any missing criterion are excluded; count them so the user is told
@@ -18,8 +25,7 @@ program define mcda_topsis, rclass
     qui count if `touse'
     local n_used = r(N)
     if (`n_used' == 0) {
-        di as error "No observations remaining after handling missing values."
-        exit 2000
+        _mcda_err 2000 "No observations remaining after handling missing values." `fromdialog'
     }
     local n_excl = `n_all' - `n_used'
     if (`n_excl' > 0) {
@@ -33,10 +39,10 @@ program define mcda_topsis, rclass
     local n_crit : word count `criteria'
 
     if ("`weights'" == "") {
-        * Default to equal weights
+        * Default to equal weights summing to 1
         local weights ""
         forvalues i = 1/`n_crit' {
-            local weights "`weights' 1"
+            local weights "`weights' `=1/`n_crit''"
         }
     }
 
@@ -53,34 +59,22 @@ program define mcda_topsis, rclass
 
     * One weight per criterion also with domains(): the first weight of each domain is split
     if (`n_w' != `n_crit') {
-        di as error "Number of weights (`n_w') does not match number of criteria (`n_crit')."
-        exit 198
+        _mcda_err 198 "Number of weights (`n_w') does not match number of criteria (`n_crit')." `fromdialog'
     }
     if (`n_d' != `n_crit') {
-        di as error "Number of directions (`n_d') does not match number of criteria (`n_crit')."
-        exit 198
+        _mcda_err 198 "Number of directions (`n_d') does not match number of criteria (`n_crit')." `fromdialog'
     }
     if ("`domains'" != "" & `n_dom' != `n_crit') {
-        di as error "Number of domain IDs (`n_dom') does not match number of criteria (`n_crit')."
-        exit 198
+        _mcda_err 198 "Number of domain IDs (`n_dom') does not match number of criteria (`n_crit')." `fromdialog'
     }
-
-    local w_sum = 0
     foreach x of local weights {
         if (`x' < 0) {
-            di as error "Weights must be non-negative."
-            exit 198
+            _mcda_err 198 "Weights must be non-negative." `fromdialog'
         }
-        local w_sum = `w_sum' + `x'
-    }
-    if (`w_sum' == 0) {
-        di as error "At least one weight must be positive."
-        exit 198
     }
     foreach x of local direction {
         if !inlist(`x', 1, -1) {
-            di as error "Directions must be 1 (benefit) or -1 (cost)."
-            exit 198
+            _mcda_err 198 "Directions must be 1 (benefit) or -1 (cost)." `fromdialog'
         }
     }
 
@@ -89,6 +83,15 @@ program define mcda_topsis, rclass
         * If domains are provided, we need to adjust weights
         mata: split_domain_weights("`weights'", "`domains'", "`criteria'")
         local weights `r(weights)'
+    }
+
+    * Weights (after domain splitting) must sum to 1; 0.01 tolerance absorbs rounded inputs
+    local w_sum = 0
+    foreach x of local weights {
+        local w_sum = `w_sum' + `x'
+    }
+    if (abs(`w_sum' - 1) > 0.01) {
+        _mcda_err 198 "Weights must sum to 1 (tolerance 0.01); they sum to `: di %6.4f `w_sum''." `fromdialog'
     }
 
     * --- Core TOPSIS Logic (Mata) ---
@@ -126,6 +129,14 @@ program define mcda_topsis, rclass
     return scalar N_excluded = `n_excl'
     return local weights "`weights'"
     return local direction "`direction'"
+end
+
+* Error helper: message in the Results window and, from the dialog, in a pop-up box
+program define _mcda_err
+    args rc msg fromdialog
+    di as error `"`msg'"'
+    if ("`fromdialog'" != "") capture window stopbox stop `"`msg'"'
+    exit `rc'
 end
 
 * --- Mata Functions ---

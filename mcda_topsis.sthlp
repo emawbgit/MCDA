@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.2.0  19nov2026}{...}
+{* *! version 1.3.0  19nov2026}{...}
 {vieweralsosee "" "--"}{...}
 {viewerjumpto "Syntax" "mcda_topsis##syntax"}{...}
 {viewerjumpto "Description" "mcda_topsis##description"}{...}
@@ -29,6 +29,9 @@
 {synopt:{opt gen:erate(names)}}specify names for the generated score and rank variables; default is {it:topsis_score} and {it:topsis_rank}{p_end}
 {synoptline}
 
+{pstd}
+Dialog box: type {cmd:db mcda_topsis} (see {help mcda_topsis##dialog:Dialog box}).
+
 
 {marker description}{...}
 {title:Description}
@@ -51,6 +54,9 @@ to missing and a note reports how many were excluded (see {cmd:r(N_excluded)}).
 {pstd}
 The rank variable assigns 1 to the highest score. Observations with tied scores share the same rank.
 
+{pstd}
+Each criterion may appear only once in {varlist}; a repeated variable (also through abbreviations) is an error.
+
 
 {marker options}{...}
 {title:Options}
@@ -59,7 +65,8 @@ The rank variable assigns 1 to the highest score. Observations with tied scores 
 {opt weights(numlist)} specifies the importance of each criterion. If {opt domains()} is not used, the number 
 of weights must match the number of variables; this also holds when {opt domains()} is used, in which case the
 weight provided for the first occurrence of a domain is divided equally among all variables in that domain.
-Weights must be non-negative and at least one must be positive. Default is equal weights.
+Weights must be non-negative and, after any domain splitting, must sum to 1 (a tolerance of 0.01 absorbs
+rounded inputs such as three decimals). Default is equal weights, 1/k for k criteria.
 
 {phang}
 {opt direction(numlist)} specifies whether a variable is a "benefit" (1) or a "cost" (-1). Higher values in 
@@ -70,6 +77,26 @@ benefit variables contribute positively to the score. Default is 1 for all varia
 
 {phang}
 {opt generate(score_var rank_var)} allows the user to name the output variables.
+
+
+{marker dialog}{...}
+{title:Dialog box}
+
+{pstd}
+{cmd:db mcda_topsis} opens a point-and-click dialog. Each row holds one criterion: pick the variable
+from the drop-down list, type its weight and tick {bf:Cost} when higher values should lower the score
+(direction -1; unticked rows are benefits, direction 1). Empty rows are skipped, so rows 1 to 20 can be
+filled in any number. Each variable may be used once and the weights must sum to 1; these rules are checked
+when you click {bf:OK} or {bf:Submit}, and a violation is shown in an error window (use {bf:Submit} to keep the
+dialog open while fixing it). The {bf:Options} tab takes an {cmd:if} restriction, domain IDs and the names of the
+generated variables. {bf:Submit} runs the command and keeps the dialog open; the copy button puts the
+command on the clipboard so it can be pasted into a do-file.
+
+{pstd}
+To add the dialog to the {bf:User > Statistics} menu, put these lines in your {help profile} do-file:
+
+{phang2}{cmd:. window menu append item "stUserStatistics" "MCDA: TOPSIS ranking" "db mcda_topsis"}{p_end}
+{phang2}{cmd:. window menu refresh}{p_end}
 
 
 {marker installation}{...}
