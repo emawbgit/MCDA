@@ -1,11 +1,12 @@
 {smcl}
-{* *! version 1.1.0  22may2024}{...}
+{* *! version 1.2.0  19nov2026}{...}
 {vieweralsosee "" "--"}{...}
 {viewerjumpto "Syntax" "mcda_topsis##syntax"}{...}
 {viewerjumpto "Description" "mcda_topsis##description"}{...}
 {viewerjumpto "Options" "mcda_topsis##options"}{...}
 {viewerjumpto "Installation" "mcda_topsis##installation"}{...}
 {viewerjumpto "Examples" "mcda_topsis##examples"}{...}
+{viewerjumpto "Stored results" "mcda_topsis##results"}{...}
 {title:Title}
 
 {phang}
@@ -40,6 +41,15 @@ and the negative ideal solution (NIS).
 {pstd}
 The command uses Min-Max normalization to bring all criteria to a 0-1 scale. Benefit criteria (direction 1) 
 are normalized as (x - min) / (max - min), while cost criteria (direction -1) are normalized as (max - x) / (max - min).
+Min-Max normalization is invariant to adding a constant to a criterion, so criteria with an arbitrary origin
+(for example principal-component scores) can be used as they are.
+
+{pstd}
+Observations with a missing value in any criterion are excluded from the ranking; their score and rank are set
+to missing and a note reports how many were excluded (see {cmd:r(N_excluded)}).
+
+{pstd}
+The rank variable assigns 1 to the highest score. Observations with tied scores share the same rank.
 
 
 {marker options}{...}
@@ -47,12 +57,16 @@ are normalized as (x - min) / (max - min), while cost criteria (direction -1) ar
 
 {phang}
 {opt weights(numlist)} specifies the importance of each criterion. If {opt domains()} is not used, the number 
-of weights must match the number of variables. If {opt domains()} is used, the weight provided for the first 
-occurrence of a domain is divided equally among all variables in that domain.
+of weights must match the number of variables; this also holds when {opt domains()} is used, in which case the
+weight provided for the first occurrence of a domain is divided equally among all variables in that domain.
+Weights must be non-negative and at least one must be positive. Default is equal weights.
 
 {phang}
 {opt direction(numlist)} specifies whether a variable is a "benefit" (1) or a "cost" (-1). Higher values in 
-benefit variables contribute positively to the score.
+benefit variables contribute positively to the score. Default is 1 for all variables.
+
+{phang}
+{opt domains(numlist)} assigns each variable to a domain; one domain ID per variable.
 
 {phang}
 {opt generate(score_var rank_var)} allows the user to name the output variables.
@@ -86,8 +100,24 @@ To install via net install:
 {phang2}{cmd:. mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)}{p_end}
 
 
+{marker results}{...}
+{title:Stored results}
+
+{pstd}
+{cmd:mcda_topsis} stores the following in {cmd:r()}:
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{cmd:r(N)}}number of observations ranked{p_end}
+{synopt:{cmd:r(N_excluded)}}number of observations excluded because of missing criteria{p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{cmd:r(weights)}}weights used (after any domain splitting){p_end}
+{synopt:{cmd:r(direction)}}directions used{p_end}
+
+
 {title:Author}
-{pstd}Jules (MCDA Toolkit Development)
+{pstd}Emanuele Clemente
 
 {title:License}
 {pstd}MIT License
