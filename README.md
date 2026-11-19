@@ -83,17 +83,13 @@ mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)
 ## Stored results
 `r(N)`, `r(N_excluded)`, `r(weights)` (after domain splitting), `r(direction)`.
 
-## Version history
--   **1.3.1** (2026-11-19): `domains()` now abbreviates to `dom()` (`d()` means `direction()` only, as documented); author and contact details; documentation tidy-up.
--   **1.3.0** (2026-11-19): `db mcda_topsis` dialog box; each criterion only once; weights must sum to 1 (±0.01; default 1/k); dialog shows rule violations in an error window.
--   **1.2.0** (2026-11-19): report observations excluded for missing criteria; validate weights, directions and domain IDs (one per criterion); tied scores share a rank instead of being broken arbitrarily; summary table no longer fails with fewer than 10 observations; stored results.
--   **1.1.0** (2024-05-22): domain weighting.
-
 ## Reporting Bugs or Desiderata
 If you encounter any issues or bugs, please open an issue on the [GitHub repository](https://github.com/emawbgit/MCDA/issues). Please include your Stata version and a sample of your data.
 
 ## Author
-Emanuele Clemente, University of Bari "Aldo Moro" ([eclemente@worldbank.org](mailto:eclemente@worldbank.org))
+Emanuele Clemente
+World Bank Group
+([eclemente@worldbank.org](mailto:eclemente@worldbank.org))
 
 ## License
 MIT
