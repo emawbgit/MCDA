@@ -1,29 +1,37 @@
-*! version 1.1.0  22may2024
+*! version 1.2.0  19nov2026
 program define mcda_topsis, rclass
     version 16.0
 
     syntax varlist(numeric) [if] [in] [, ///
         Weights(numlist) ///
-        Direction(numlist) ///
+        Direction(numlist integer) ///
         Domains(numlist) ///
         GENerate(string) ///
     ]
 
     * --- Data Preparation ---
-    marksample touse
-    markout `touse' `varlist'
-    
+    * Rows with any missing criterion are excluded; count them so the user is told
+    marksample touse, novarlist
     qui count if `touse'
-    if (r(N) == 0) {
+    local n_all = r(N)
+    markout `touse' `varlist'
+    qui count if `touse'
+    local n_used = r(N)
+    if (`n_used' == 0) {
         di as error "No observations remaining after handling missing values."
         exit 2000
+    }
+    local n_excl = `n_all' - `n_used'
+    if (`n_excl' > 0) {
+        di as text "note: `n_excl' observation(s) excluded because of missing values in the criteria;" ///
+            " their score and rank are missing."
     }
 
     local criteria "`varlist'"
 
     * --- Validation and Weight Processing ---
     local n_crit : word count `criteria'
-    
+
     if ("`weights'" == "") {
         * Default to equal weights
         local weights ""
@@ -31,24 +39,48 @@ program define mcda_topsis, rclass
             local weights "`weights' 1"
         }
     }
-    
-    local n_w : word count `weights'
-    local n_d : word count `direction'
-    
-    if (`n_w' != `n_crit') & ("`domains'" == "") {
-        di as error "Number of weights (`n_w') does not match number of criteria (`n_crit')."
-        exit 198
-    }
-    
-    if (`n_d' != `n_crit') & ("`direction'" != "") {
-        di as error "Number of directions (`n_d') does not match number of criteria (`n_crit')."
-        exit 198
-    }
-    
+
     if ("`direction'" == "") {
         local direction ""
         forvalues i = 1/`n_crit' {
             local direction "`direction' 1"
+        }
+    }
+
+    local n_w : word count `weights'
+    local n_d : word count `direction'
+    local n_dom : word count `domains'
+
+    * One weight per criterion also with domains(): the first weight of each domain is split
+    if (`n_w' != `n_crit') {
+        di as error "Number of weights (`n_w') does not match number of criteria (`n_crit')."
+        exit 198
+    }
+    if (`n_d' != `n_crit') {
+        di as error "Number of directions (`n_d') does not match number of criteria (`n_crit')."
+        exit 198
+    }
+    if ("`domains'" != "" & `n_dom' != `n_crit') {
+        di as error "Number of domain IDs (`n_dom') does not match number of criteria (`n_crit')."
+        exit 198
+    }
+
+    local w_sum = 0
+    foreach x of local weights {
+        if (`x' < 0) {
+            di as error "Weights must be non-negative."
+            exit 198
+        }
+        local w_sum = `w_sum' + `x'
+    }
+    if (`w_sum' == 0) {
+        di as error "At least one weight must be positive."
+        exit 198
+    }
+    foreach x of local direction {
+        if !inlist(`x', 1, -1) {
+            di as error "Directions must be 1 (benefit) or -1 (cost)."
+            exit 198
         }
     }
 
@@ -62,52 +94,38 @@ program define mcda_topsis, rclass
     * --- Core TOPSIS Logic (Mata) ---
     tempvar score
     qui gen double `score' = .
-    
+
     mata: do_topsis("`criteria'", "`weights'", "`direction'", "`touse'", "`score'")
 
     * --- Output Generation ---
-    if ("`generate'" != "") {
-        local g1 : word 1 of `generate'
-        local g2 : word 2 of `generate'
-        
-        if ("`g1'" == "") local g1 "topsis_score"
-        if ("`g2'" == "") local g2 "topsis_rank"
-        
-        capture drop `g1'
-        qui gen double `g1' = `score' if `touse'
-        label variable `g1' "TOPSIS Relative Closeness Score"
-        
-        capture drop `g2'
-        qui egen long `g2' = rank(-`score') if `touse', unique
-        label variable `g2' "TOPSIS Rank"
-        
-        di as text "Generated variables: `g1', `g2'"
-    }
-    else {
-        capture drop topsis_score
-        qui gen double topsis_score = `score' if `touse'
-        label variable topsis_score "TOPSIS Relative Closeness Score"
-        
-        capture drop topsis_rank
-        qui egen long topsis_rank = rank(-topsis_score) if `touse', unique
-        label variable topsis_rank "TOPSIS Rank"
-        
-        di as text "Generated variables: topsis_score, topsis_rank"
-    }
+    local g1 : word 1 of `generate'
+    local g2 : word 2 of `generate'
+    if ("`g1'" == "") local g1 "topsis_score"
+    if ("`g2'" == "") local g2 "topsis_rank"
+
+    capture drop `g1'
+    qui gen double `g1' = `score' if `touse'
+    label variable `g1' "TOPSIS Relative Closeness Score"
+
+    * Rank 1 = highest score; tied scores share the same (lowest) rank
+    capture drop `g2'
+    qui egen long `g2' = rank(`score') if `touse', field
+    label variable `g2' "TOPSIS Rank"
+
+    di as text "Generated variables: `g1', `g2'"
 
     * --- Display Summary ---
     di _n as text "TOPSIS Results Summary (Top 10)"
     preserve
     qui keep if `touse'
     gsort -`score'
-    if ("`generate'" != "") {
-        list `criteria' `g1' `g2' in 1/10
-    }
-    else {
-        list `criteria' topsis_score topsis_rank in 1/10
-    }
+    list `criteria' `g1' `g2' in 1/`=min(10, _N)'
     restore
 
+    return scalar N = `n_used'
+    return scalar N_excluded = `n_excl'
+    return local weights "`weights'"
+    return local direction "`direction'"
 end
 
 * --- Mata Functions ---
@@ -118,29 +136,29 @@ void split_domain_weights(string scalar w_str, string scalar d_str, string scala
     real scalar i, j, p, count, dom_w
     real rowvector idx, final_w
     string scalar cur_dom
-    
+
     w = strtoreal(tokens(w_str))
     doms = tokens(d_str)
     unique_doms = uniqrows(doms')'
-    
+
     final_w = J(1, cols(doms), 0)
-    
+
     for (i=1; i<=cols(unique_doms); i++) {
         cur_dom = unique_doms[i]
-        
+
         idx = (doms :== cur_dom)
         count = sum(idx)
-        
+
         p = selectindex(idx)[1]
         dom_w = w[p]
-        
+
         for (j=1; j<=cols(doms); j++) {
             if (doms[j] == cur_dom) {
                 final_w[j] = dom_w / count
             }
         }
     }
-    
+
     st_rclear()
     st_global("r(weights)", invtokens(strofreal(final_w)))
 }
@@ -150,15 +168,15 @@ void do_topsis(string scalar varlist, string scalar weight_str, string scalar di
     real rowvector w, directions, max_x, min_x, pis, nis
     real colvector d_plus, d_minus, score
     real scalar i, j, range
-    
+
     X = st_data(., varlist, touse)
     w = strtoreal(tokens(weight_str))
     directions = strtoreal(tokens(dir_str))
-    
+
     // Normalize (Min-Max)
     max_x = colmax(X)
     min_x = colmin(X)
-    
+
     Y = J(rows(X), cols(X), .)
     for (j=1; j<=cols(X); j++) {
         range = max_x[j] - min_x[j]
@@ -174,26 +192,26 @@ void do_topsis(string scalar varlist, string scalar weight_str, string scalar di
             }
         }
     }
-    
+
     // Weighting
     Y = Y * diag(w)
-    
+
     // Ideal Solutions
     pis = colmax(Y)
     nis = colmin(Y)
-    
+
     // Distances
     d_plus = sqrt(rowsum((Y :- pis):^2))
     d_minus = sqrt(rowsum((Y :- nis):^2))
-    
+
     // Relative Closeness
     score = d_minus :/ (d_plus + d_minus)
-    
+
     // Fix cases where denominator is zero
     for (i=1; i<=rows(score); i++) {
         if ( (d_plus[i] + d_minus[i]) == 0 ) score[i] = 0
     }
-    
+
     st_store(., scorevar, touse, score)
 }
 end

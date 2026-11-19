@@ -33,6 +33,8 @@ The `mcda_topsis` command processes a set of numeric variables and outputs ranki
 -   **Min-Max Normalization**: Automatically standardizes criteria to a 0-1 scale.
 -   **Domain Weighting**: Allows weights to be assigned to groups of variables (domains), which are then automatically split among members.
 -   **Flexible Directionality**: Easily specify "benefit" criteria (higher is better) vs "cost" criteria (lower is better).
+-   **Missing values**: observations with a missing criterion are excluded and reported (`r(N_excluded)`), never ranked silently.
+-   **Ties**: rank 1 is the highest score; tied scores share the same rank.
 
 ## Syntax
 
@@ -63,6 +65,13 @@ In this example, a weight of 0.5 is assigned to Domain 1 (containing `mpg` and `
 ```stata
 mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)
 ```
+
+## Stored results
+`r(N)`, `r(N_excluded)`, `r(weights)` (after domain splitting), `r(direction)`.
+
+## Version history
+-   **1.2.0** (2026-11-19): report observations excluded for missing criteria; validate weights, directions and domain IDs (one per criterion); tied scores share a rank instead of being broken arbitrarily; summary table no longer fails with fewer than 10 observations; stored results.
+-   **1.1.0** (2024-05-22): domain weighting.
 
 ## Reporting Bugs or Desiderata
 If you encounter any issues or bugs, please open an issue on the [GitHub repository](https://github.com/emawbgit/MCDA/issues). Please include your Stata version and a sample of your data.
