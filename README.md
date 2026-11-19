@@ -1,4 +1,4 @@
-# MCDA Toolkit for Stata
+# Multi Criteria Decision Analysis (MCDA) Toolkit for Stata
 
 This repository contains Stata commands for Multi-Criteria Decision Analysis (MCDA). 
 
