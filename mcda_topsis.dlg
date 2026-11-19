@@ -1,0 +1,377 @@
+/*
+  mcda_topsis.dlg  -- dialog for mcda_topsis (open with: db mcda_topsis)
+  *! version 1.0.0  19nov2026
+  One row per criterion: pick a variable, type its weight, tick Cost if higher
+  values should LOWER the score (impact -). Empty rows are ignored.
+*/
+VERSION 16.0
+POSITION . . 540 400
+
+DIALOG main, label("mcda_topsis - TOPSIS multi-criteria ranking") tabtitle("Criteria 1-10")
+BEGIN
+  TEXT tx_hv_main 35 10 235 ., label("Criterion (variable)")
+  TEXT tx_hw_main 280 10 80 ., label("Weight")
+  TEXT tx_hc_main 370 10 160 ., label("Cost (impact -)")
+  TEXT     tx_n1 10 40 22 ., label("1.")
+  VARNAME  vn_1 35 40 235 ., label("Criterion 1")
+  EDIT     ed_w1 280 40 80 ., numonly default(1) label("Weight 1")
+  CHECKBOX ck_c1 370 40 160 ., label("Cost")
+  TEXT     tx_n2 10 70 22 ., label("2.")
+  VARNAME  vn_2 35 70 235 ., label("Criterion 2")
+  EDIT     ed_w2 280 70 80 ., numonly default(1) label("Weight 2")
+  CHECKBOX ck_c2 370 70 160 ., label("Cost")
+  TEXT     tx_n3 10 100 22 ., label("3.")
+  VARNAME  vn_3 35 100 235 ., label("Criterion 3")
+  EDIT     ed_w3 280 100 80 ., numonly default(1) label("Weight 3")
+  CHECKBOX ck_c3 370 100 160 ., label("Cost")
+  TEXT     tx_n4 10 130 22 ., label("4.")
+  VARNAME  vn_4 35 130 235 ., label("Criterion 4")
+  EDIT     ed_w4 280 130 80 ., numonly default(1) label("Weight 4")
+  CHECKBOX ck_c4 370 130 160 ., label("Cost")
+  TEXT     tx_n5 10 160 22 ., label("5.")
+  VARNAME  vn_5 35 160 235 ., label("Criterion 5")
+  EDIT     ed_w5 280 160 80 ., numonly default(1) label("Weight 5")
+  CHECKBOX ck_c5 370 160 160 ., label("Cost")
+  TEXT     tx_n6 10 190 22 ., label("6.")
+  VARNAME  vn_6 35 190 235 ., label("Criterion 6")
+  EDIT     ed_w6 280 190 80 ., numonly default(1) label("Weight 6")
+  CHECKBOX ck_c6 370 190 160 ., label("Cost")
+  TEXT     tx_n7 10 220 22 ., label("7.")
+  VARNAME  vn_7 35 220 235 ., label("Criterion 7")
+  EDIT     ed_w7 280 220 80 ., numonly default(1) label("Weight 7")
+  CHECKBOX ck_c7 370 220 160 ., label("Cost")
+  TEXT     tx_n8 10 250 22 ., label("8.")
+  VARNAME  vn_8 35 250 235 ., label("Criterion 8")
+  EDIT     ed_w8 280 250 80 ., numonly default(1) label("Weight 8")
+  CHECKBOX ck_c8 370 250 160 ., label("Cost")
+  TEXT     tx_n9 10 280 22 ., label("9.")
+  VARNAME  vn_9 35 280 235 ., label("Criterion 9")
+  EDIT     ed_w9 280 280 80 ., numonly default(1) label("Weight 9")
+  CHECKBOX ck_c9 370 280 160 ., label("Cost")
+  TEXT     tx_n10 10 310 22 ., label("10.")
+  VARNAME  vn_10 35 310 235 ., label("Criterion 10")
+  EDIT     ed_w10 280 310 80 ., numonly default(1) label("Weight 10")
+  CHECKBOX ck_c10 370 310 160 ., label("Cost")
+END
+
+DIALOG more, tabtitle("Criteria 11-20")
+BEGIN
+  TEXT tx_hv_more 35 10 235 ., label("Criterion (variable)")
+  TEXT tx_hw_more 280 10 80 ., label("Weight")
+  TEXT tx_hc_more 370 10 160 ., label("Cost (impact -)")
+  TEXT     tx_n11 10 40 22 ., label("11.")
+  VARNAME  vn_11 35 40 235 ., label("Criterion 11")
+  EDIT     ed_w11 280 40 80 ., numonly default(1) label("Weight 11")
+  CHECKBOX ck_c11 370 40 160 ., label("Cost")
+  TEXT     tx_n12 10 70 22 ., label("12.")
+  VARNAME  vn_12 35 70 235 ., label("Criterion 12")
+  EDIT     ed_w12 280 70 80 ., numonly default(1) label("Weight 12")
+  CHECKBOX ck_c12 370 70 160 ., label("Cost")
+  TEXT     tx_n13 10 100 22 ., label("13.")
+  VARNAME  vn_13 35 100 235 ., label("Criterion 13")
+  EDIT     ed_w13 280 100 80 ., numonly default(1) label("Weight 13")
+  CHECKBOX ck_c13 370 100 160 ., label("Cost")
+  TEXT     tx_n14 10 130 22 ., label("14.")
+  VARNAME  vn_14 35 130 235 ., label("Criterion 14")
+  EDIT     ed_w14 280 130 80 ., numonly default(1) label("Weight 14")
+  CHECKBOX ck_c14 370 130 160 ., label("Cost")
+  TEXT     tx_n15 10 160 22 ., label("15.")
+  VARNAME  vn_15 35 160 235 ., label("Criterion 15")
+  EDIT     ed_w15 280 160 80 ., numonly default(1) label("Weight 15")
+  CHECKBOX ck_c15 370 160 160 ., label("Cost")
+  TEXT     tx_n16 10 190 22 ., label("16.")
+  VARNAME  vn_16 35 190 235 ., label("Criterion 16")
+  EDIT     ed_w16 280 190 80 ., numonly default(1) label("Weight 16")
+  CHECKBOX ck_c16 370 190 160 ., label("Cost")
+  TEXT     tx_n17 10 220 22 ., label("17.")
+  VARNAME  vn_17 35 220 235 ., label("Criterion 17")
+  EDIT     ed_w17 280 220 80 ., numonly default(1) label("Weight 17")
+  CHECKBOX ck_c17 370 220 160 ., label("Cost")
+  TEXT     tx_n18 10 250 22 ., label("18.")
+  VARNAME  vn_18 35 250 235 ., label("Criterion 18")
+  EDIT     ed_w18 280 250 80 ., numonly default(1) label("Weight 18")
+  CHECKBOX ck_c18 370 250 160 ., label("Cost")
+  TEXT     tx_n19 10 280 22 ., label("19.")
+  VARNAME  vn_19 35 280 235 ., label("Criterion 19")
+  EDIT     ed_w19 280 280 80 ., numonly default(1) label("Weight 19")
+  CHECKBOX ck_c19 370 280 160 ., label("Cost")
+  TEXT     tx_n20 10 310 22 ., label("20.")
+  VARNAME  vn_20 35 310 235 ., label("Criterion 20")
+  EDIT     ed_w20 280 310 80 ., numonly default(1) label("Weight 20")
+  CHECKBOX ck_c20 370 310 160 ., label("Cost")
+END
+
+DIALOG opt, tabtitle("Options")
+BEGIN
+  TEXT tx_if  10  10 500 ., label("Restrict to observations (if expression, optional):")
+  EDIT ed_if  10  30 500 ., label("if expression")
+  TEXT tx_dom 10  70 500 ., label("Domain IDs, one per filled row in row order (optional):")
+  EDIT ed_dom 10  90 300 ., label("Domain IDs") option(domains)
+  TEXT tx_gen 10 130 500 ., label("Names for the score and rank variables (optional):")
+  EDIT ed_gen 10 150 300 ., label("Score and rank names") option(generate)
+  TEXT tx_nt1 10 200 500 ., label("Weights are split equally within a domain: give the domain weight")
+  TEXT tx_nt2 10 220 500 ., label("on every row of that domain (only its first row is used).")
+END
+
+OK ok1,      label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+HELP hlp1,   view("help mcda_topsis")
+RESET res1
+COPY copy1
+
+PROGRAM command
+BEGIN
+  put "mcda_topsis "
+  varlist main.vn_1 [main.vn_2] [main.vn_3] [main.vn_4] [main.vn_5] [main.vn_6] [main.vn_7] [main.vn_8] [main.vn_9] [main.vn_10] [more.vn_11] [more.vn_12] [more.vn_13] [more.vn_14] [more.vn_15] [more.vn_16] [more.vn_17] [more.vn_18] [more.vn_19] [more.vn_20]
+  if opt.ed_if {
+    put " if " opt.ed_if
+  }
+  beginoptions
+    put "weights("
+    if main.vn_1 {
+      require main.ed_w1
+      put main.ed_w1 " "
+    }
+    if main.vn_2 {
+      require main.ed_w2
+      put main.ed_w2 " "
+    }
+    if main.vn_3 {
+      require main.ed_w3
+      put main.ed_w3 " "
+    }
+    if main.vn_4 {
+      require main.ed_w4
+      put main.ed_w4 " "
+    }
+    if main.vn_5 {
+      require main.ed_w5
+      put main.ed_w5 " "
+    }
+    if main.vn_6 {
+      require main.ed_w6
+      put main.ed_w6 " "
+    }
+    if main.vn_7 {
+      require main.ed_w7
+      put main.ed_w7 " "
+    }
+    if main.vn_8 {
+      require main.ed_w8
+      put main.ed_w8 " "
+    }
+    if main.vn_9 {
+      require main.ed_w9
+      put main.ed_w9 " "
+    }
+    if main.vn_10 {
+      require main.ed_w10
+      put main.ed_w10 " "
+    }
+    if more.vn_11 {
+      require more.ed_w11
+      put more.ed_w11 " "
+    }
+    if more.vn_12 {
+      require more.ed_w12
+      put more.ed_w12 " "
+    }
+    if more.vn_13 {
+      require more.ed_w13
+      put more.ed_w13 " "
+    }
+    if more.vn_14 {
+      require more.ed_w14
+      put more.ed_w14 " "
+    }
+    if more.vn_15 {
+      require more.ed_w15
+      put more.ed_w15 " "
+    }
+    if more.vn_16 {
+      require more.ed_w16
+      put more.ed_w16 " "
+    }
+    if more.vn_17 {
+      require more.ed_w17
+      put more.ed_w17 " "
+    }
+    if more.vn_18 {
+      require more.ed_w18
+      put more.ed_w18 " "
+    }
+    if more.vn_19 {
+      require more.ed_w19
+      put more.ed_w19 " "
+    }
+    if more.vn_20 {
+      require more.ed_w20
+      put more.ed_w20 " "
+    }
+    put ") direction("
+    if main.vn_1 {
+      if main.ck_c1 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_2 {
+      if main.ck_c2 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_3 {
+      if main.ck_c3 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_4 {
+      if main.ck_c4 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_5 {
+      if main.ck_c5 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_6 {
+      if main.ck_c6 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_7 {
+      if main.ck_c7 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_8 {
+      if main.ck_c8 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_9 {
+      if main.ck_c9 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_10 {
+      if main.ck_c10 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_11 {
+      if more.ck_c11 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_12 {
+      if more.ck_c12 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_13 {
+      if more.ck_c13 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_14 {
+      if more.ck_c14 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_15 {
+      if more.ck_c15 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_16 {
+      if more.ck_c16 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_17 {
+      if more.ck_c17 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_18 {
+      if more.ck_c18 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_19 {
+      if more.ck_c19 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_20 {
+      if more.ck_c20 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    put ") "
+    optionarg opt.ed_dom
+    optionarg opt.ed_gen
+  endoptions
+END

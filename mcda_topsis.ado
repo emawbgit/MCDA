@@ -1,4 +1,4 @@
-*! version 1.2.0  19nov2026
+*! version 1.3.0  19nov2026
 program define mcda_topsis, rclass
     version 16.0
 
