@@ -1,12 +1,14 @@
 {smcl}
-{* *! version 1.3.0  19nov2026}{...}
+{* *! version 1.3.1  19nov2026}{...}
 {vieweralsosee "" "--"}{...}
 {viewerjumpto "Syntax" "mcda_topsis##syntax"}{...}
 {viewerjumpto "Description" "mcda_topsis##description"}{...}
 {viewerjumpto "Options" "mcda_topsis##options"}{...}
+{viewerjumpto "Dialog box" "mcda_topsis##dialog"}{...}
 {viewerjumpto "Installation" "mcda_topsis##installation"}{...}
 {viewerjumpto "Examples" "mcda_topsis##examples"}{...}
 {viewerjumpto "Stored results" "mcda_topsis##results"}{...}
+{viewerjumpto "Author" "mcda_topsis##author"}{...}
 {title:Title}
 
 {phang}
@@ -62,18 +64,18 @@ Each criterion may appear only once in {varlist}; a repeated variable (also thro
 {title:Options}
 
 {phang}
-{opt weights(numlist)} specifies the importance of each criterion. If {opt domains()} is not used, the number 
-of weights must match the number of variables; this also holds when {opt domains()} is used, in which case the
-weight provided for the first occurrence of a domain is divided equally among all variables in that domain.
-Weights must be non-negative and, after any domain splitting, must sum to 1 (a tolerance of 0.01 absorbs
-rounded inputs such as three decimals). Default is equal weights, 1/k for k criteria.
+{opt weights(numlist)} specifies the importance of each criterion, one weight per variable in {varlist} order.
+Weights must be non-negative and must sum to 1; a tolerance of 0.01 absorbs rounded inputs (for example,
+weights typed with three decimals). Default is equal weights, 1/k for k criteria. With {opt domains()}, see below.
 
 {phang}
 {opt direction(numlist)} specifies whether a variable is a "benefit" (1) or a "cost" (-1). Higher values in 
 benefit variables contribute positively to the score. Default is 1 for all variables.
 
 {phang}
-{opt domains(numlist)} assigns each variable to a domain; one domain ID per variable.
+{opt domains(numlist)} assigns each variable to a domain, one domain ID per variable. The weight given for the
+first variable of a domain is the domain weight and is divided equally among the variables of that domain;
+the weights typed for the other variables of the domain are ignored. The domain weights must sum to 1.
 
 {phang}
 {opt generate(score_var rank_var)} allows the user to name the output variables.
@@ -143,8 +145,16 @@ To install via net install:
 {synopt:{cmd:r(direction)}}directions used{p_end}
 
 
+{marker author}{...}
 {title:Author}
-{pstd}Emanuele Clemente
+
+{pstd}
+Emanuele Clemente{break}
+University of Bari "Aldo Moro"{break}
+{browse "mailto:eclemente@worldbank.org":eclemente@worldbank.org}
+
+{pstd}
+Bug reports and suggestions: {browse "https://github.com/emawbgit/MCDA/issues":github.com/emawbgit/MCDA/issues}
 
 {title:License}
 {pstd}MIT License

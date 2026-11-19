@@ -38,7 +38,12 @@ The `mcda_topsis` command processes a set of numeric variables and outputs ranki
 -   **Input rules**: each criterion may be entered only once; weights (after domain splitting) must sum to 1, with a 0.01 tolerance for rounding.
 
 ## Dialog box
-Type `db mcda_topsis` for a point-and-click dialog: one row per criterion (variable drop-down, weight, **Cost** tick box), up to 20 criteria; rule violations (repeated variable, weights not summing to 1) appear in an error window on OK/Submit; plus an Options tab for `if`, domains and output names. To add it to the **User > Statistics** menu, put this in your `profile.do`:
+Type `db mcda_topsis` for a point-and-click dialog:
+-   **Criteria tabs** (up to 20 criteria): one row per criterion, with a variable drop-down, a weight field and a **Cost** tick box (ticked = direction -1). Empty rows are skipped.
+-   **Options tab**: `if` restriction, domain IDs, names of the generated variables.
+-   **OK / Submit / Copy**: rule violations (repeated variable, weights not summing to 1) open an error window; **Submit** keeps the dialog open while you fix them; **Copy** puts the command on the clipboard for your do-file.
+
+To add it to the **User > Statistics** menu, put this in your `profile.do`:
 
 ```stata
 window menu append item "stUserStatistics" "MCDA: TOPSIS ranking" "db mcda_topsis"
@@ -54,9 +59,9 @@ mcda_topsis varlist [if] [in] [, options]
 ### Options
 
 #### Main
--   `weights(numlist)`: Specify the importance of each criterion.
--   `direction(numlist)`: Specify direction for each variable (1 for benefit, -1 for cost).
--   `domains(numlist)`: Specify domain IDs to split weights across groups of variables.
+-   `weights(numlist)`: one weight per criterion; non-negative and summing to 1 (±0.01). Default: 1/k each.
+-   `direction(numlist)`: one direction per criterion, 1 for benefit (higher raises the score), -1 for cost. Default: 1.
+-   `domains(numlist)`: one domain ID per criterion; the weight of a domain's first variable is the domain weight and is split equally within the domain. Domain weights must sum to 1.
 
 #### Output
 -   `generate(names)`: Specify names for the generated score and rank variables (default: `topsis_score`, `topsis_rank`).
@@ -79,6 +84,7 @@ mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)
 `r(N)`, `r(N_excluded)`, `r(weights)` (after domain splitting), `r(direction)`.
 
 ## Version history
+-   **1.3.1** (2026-11-19): `domains()` now abbreviates to `dom()` (`d()` means `direction()` only, as documented); author and contact details; documentation tidy-up.
 -   **1.3.0** (2026-11-19): `db mcda_topsis` dialog box; each criterion only once; weights must sum to 1 (±0.01; default 1/k); dialog shows rule violations in an error window.
 -   **1.2.0** (2026-11-19): report observations excluded for missing criteria; validate weights, directions and domain IDs (one per criterion); tied scores share a rank instead of being broken arbitrarily; summary table no longer fails with fewer than 10 observations; stored results.
 -   **1.1.0** (2024-05-22): domain weighting.
@@ -87,7 +93,7 @@ mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)
 If you encounter any issues or bugs, please open an issue on the [GitHub repository](https://github.com/emawbgit/MCDA/issues). Please include your Stata version and a sample of your data.
 
 ## Author
-Emanuele Clemente
+Emanuele Clemente, University of Bari "Aldo Moro" ([eclemente@worldbank.org](mailto:eclemente@worldbank.org))
 
 ## License
 MIT

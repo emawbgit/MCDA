@@ -1,6 +1,7 @@
 /*
   mcda_topsis.dlg  -- dialog for mcda_topsis (open with: db mcda_topsis)
-  *! version 1.0.0  19nov2026
+  *! version 1.3.1  19nov2026
+  *! Emanuele Clemente, University of Bari "Aldo Moro", eclemente@worldbank.org
   One row per criterion: pick a variable, type its weight, tick Cost if higher
   values should LOWER the score (impact -). Empty rows are ignored.
 */
