@@ -1,15 +1,46 @@
-*! version 1.3.1  19nov2026
-*! Emanuele Clemente, University of Bari "Aldo Moro", eclemente@worldbank.org
+*! version 1.4.0  23nov2026
+*! Emanuele Clemente, World Bank Group, eclemente@worldbank.org
 program define mcda_topsis, rclass
     version 16.0
+
+    * Domains as parenthesised groups, optionally named: (hazard: a b c) (d e) ...
+    * The group a variable sits in becomes its domain ID, so no IDs need typing
+    local k 0
+    while substr(strtrim(`"`0'"'), 1, 1) == "(" {
+        gettoken grp 0 : 0, match(paren)
+        local ++k
+        local dname `k'
+        if strpos(`"`grp'"', ":") {
+            gettoken dname grp : grp, parse(":")
+            gettoken colon grp : grp, parse(":")
+            local dname = strtoname(strtrim(`"`dname'"'))
+        }
+        unab grp : `grp'
+        local grouped `grouped' `grp'
+        local domnames `domnames' `dname'
+        foreach v of local grp {
+            local domids `domids' `k'
+        }
+    }
+    if (`k' > 0) local 0 `"`grouped' `0'"'
 
     syntax varlist(numeric) [if] [in] [, ///
         Weights(numlist) ///
         Direction(numlist integer) ///
         DOMains(numlist) /// "d" abbreviates direction() only
+        DOMAINWeights(numlist) /// one weight per domain, ascending domain ID
         GENerate(string) ///
+        WEIGHTSOnly /// show the weights tables and stop: a weights calculator
         FROMDIALOG /// undocumented: set by mcda_topsis.dlg so errors also pop up
     ]
+
+    if ("`domids'" != "") {
+        if ("`domains'" != "") {
+            _mcda_err 198 "Give domains either as (groups) or with domains(), not both." `fromdialog'
+        }
+        local domains `domids'
+    }
+    else local domnames
 
     * --- Validation of criteria ---
     local dups : list dups varlist
@@ -39,9 +70,35 @@ program define mcda_topsis, rclass
     * --- Validation and Weight Processing ---
     local n_crit : word count `criteria'
 
-    if ("`weights'" == "") {
+    if ("`domainweights'" != "") {
+        if ("`domains'" == "") {
+            _mcda_err 198 "domainweights() requires domains()." `fromdialog'
+        }
+        if ("`weights'" != "") {
+            _mcda_err 198 "Specify either weights() or domainweights(), not both." `fromdialog'
+        }
+        local u_dom : list uniq domains
+        local n_udom : list sizeof u_dom
+        local n_dw : word count `domainweights'
+        if (`n_dw' != `n_udom') {
+            _mcda_err 198 "domainweights() needs one weight per domain: `n_udom' domains, `n_dw' weights." `fromdialog'
+        }
+        foreach x of local domainweights {
+            if (`x' < 0) {
+                _mcda_err 198 "Domain weights must be non-negative." `fromdialog'
+            }
+        }
+    }
+    else if ("`weights'" == "" & "`domains'" != "") {
+        * Default with domains: equal domain weights summing to 1
+        local u_dom : list uniq domains
+        local n_udom : list sizeof u_dom
+        forvalues i = 1/`n_udom' {
+            local domainweights "`domainweights' `=1/`n_udom''"
+        }
+    }
+    else if ("`weights'" == "") {
         * Default to equal weights summing to 1
-        local weights ""
         forvalues i = 1/`n_crit' {
             local weights "`weights' `=1/`n_crit''"
         }
@@ -59,7 +116,7 @@ program define mcda_topsis, rclass
     local n_dom : word count `domains'
 
     * One weight per criterion also with domains(): the first weight of each domain is split
-    if (`n_w' != `n_crit') {
+    if ("`domainweights'" == "" & `n_w' != `n_crit') {
         _mcda_err 198 "Number of weights (`n_w') does not match number of criteria (`n_crit')." `fromdialog'
     }
     if (`n_d' != `n_crit') {
@@ -80,10 +137,14 @@ program define mcda_topsis, rclass
     }
 
     * --- Domain Weight Splitting Logic ---
+    * Each domain weight is split equally among its criteria (as in a weights calculator)
+    tempname domtab
     if ("`domains'" != "") {
-        * If domains are provided, we need to adjust weights
-        mata: split_domain_weights("`weights'", "`domains'", "`criteria'")
+        mata: split_domain_weights("`weights'", "`domainweights'", "`domains'", "`domnames'")
         local weights `r(weights)'
+        matrix `domtab' = r(domtab)
+        di _n as text "Weights by domain"
+        matlist `domtab', rowtitle(Domain) format(%9.4g) lines(rowtotal)
     }
 
     * Weights (after domain splitting) must sum to 1; 0.01 tolerance absorbs rounded inputs
@@ -93,6 +154,25 @@ program define mcda_topsis, rclass
     }
     if (abs(`w_sum' - 1) > 0.01) {
         _mcda_err 198 "Weights must sum to 1 (tolerance 0.01); they sum to `: di %6.4f `w_sum''." `fromdialog'
+    }
+
+    if ("`weightsonly'" != "") {
+        tempname wcrit
+        matrix `wcrit' = J(`n_crit', 1, .)
+        forvalues i = 1/`n_crit' {
+            matrix `wcrit'[`i', 1] = `: word `i' of `weights''
+        }
+        matrix rownames `wcrit' = `criteria'
+        matrix colnames `wcrit' = Weight
+        di _n as text "Weights by criterion"
+        matlist `wcrit', rowtitle(Criterion) format(%9.4g)
+        return scalar N = `n_used'
+        return scalar N_excluded = `n_excl'
+        return local weights "`weights'"
+        return local direction "`direction'"
+        return matrix criteria = `wcrit'
+        if ("`domains'" != "") return matrix domains = `domtab'
+        exit
     }
 
     * --- Core TOPSIS Logic (Mata) ---
@@ -130,6 +210,7 @@ program define mcda_topsis, rclass
     return scalar N_excluded = `n_excl'
     return local weights "`weights'"
     return local direction "`direction'"
+    if ("`domains'" != "") return matrix domains = `domtab'
 end
 
 * Error helper: message in the Results window and, from the dialog, in a pop-up box
@@ -142,37 +223,38 @@ end
 
 * --- Mata Functions ---
 mata:
-void split_domain_weights(string scalar w_str, string scalar d_str, string scalar c_str) {
-    real rowvector w
-    string rowvector doms, unique_doms
-    real scalar i, j, p, count, dom_w
-    real rowvector idx, final_w
-    string scalar cur_dom
+// Splits each domain weight equally among its criteria. Domain weights come from
+// domainweights() (one per domain, ascending ID) or, if empty, from the weight of
+// each domain's first criterion in weights(). Posts r(weights) and r(domtab).
+void split_domain_weights(string scalar w_str, string scalar dw_str, string scalar d_str, string scalar names_str) {
+    real rowvector d, u, w, dw, n, idx, final_w
+    real scalar i
+    string colvector rlab
 
-    w = strtoreal(tokens(w_str))
-    doms = tokens(d_str)
-    unique_doms = uniqrows(doms')'
+    d = strtoreal(tokens(d_str))
+    u = uniqrows(d')'                         // numeric order: 2 before 10
+    if (dw_str != "") dw = strtoreal(tokens(dw_str))
+    else {
+        w = strtoreal(tokens(w_str))
+        dw = J(1, cols(u), .)
+    }
+    n = J(1, cols(u), 0)
+    final_w = J(1, cols(d), 0)
+    rlab = J(cols(u) + 1, 1, "Total")
 
-    final_w = J(1, cols(doms), 0)
-
-    for (i=1; i<=cols(unique_doms); i++) {
-        cur_dom = unique_doms[i]
-
-        idx = (doms :== cur_dom)
-        count = sum(idx)
-
-        p = selectindex(idx)[1]
-        dom_w = w[p]
-
-        for (j=1; j<=cols(doms); j++) {
-            if (doms[j] == cur_dom) {
-                final_w[j] = dom_w / count
-            }
-        }
+    for (i=1; i<=cols(u); i++) {
+        idx = selectindex(d :== u[i])
+        n[i] = cols(idx)
+        if (dw_str == "") dw[i] = w[idx[1]]
+        final_w[idx] = J(1, n[i], dw[i] / n[i])
+        rlab[i] = (names_str != "" ? tokens(names_str)[i] : strofreal(u[i]))
     }
 
     st_rclear()
-    st_global("r(weights)", invtokens(strofreal(final_w)))
+    st_global("r(weights)", invtokens(strofreal(final_w, "%21.0g")))
+    st_matrix("r(domtab)", ((dw', n', (dw :/ n)') \ (sum(dw), sum(n), sum(dw))))
+    st_matrixrowstripe("r(domtab)", (J(rows(rlab), 1, ""), rlab))
+    st_matrixcolstripe("r(domtab)", (J(3, 1, ""), ("Domain_weight" \ "N_indicators" \ "Weight_per_indicator")))
 }
 
 void do_topsis(string scalar varlist, string scalar weight_str, string scalar dir_str, string scalar touse, string scalar scorevar) {

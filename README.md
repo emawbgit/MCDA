@@ -31,7 +31,7 @@ The `mcda_topsis` command processes a set of numeric variables and outputs ranki
 
 ### Key Features:
 -   **Min-Max Normalization**: Automatically standardizes criteria to a 0-1 scale.
--   **Domain Weighting**: Allows weights to be assigned to groups of variables (domains), which are then automatically split among members.
+-   **Weights calculator**: group criteria into domains with parentheses, give one weight per domain, and each domain weight is split equally among its indicators (domain weight / number of indicators), shown in a weights table. `weightsonly` previews the weights without ranking.
 -   **Flexible Directionality**: Easily specify "benefit" criteria (higher is better) vs "cost" criteria (lower is better).
 -   **Missing values**: observations with a missing criterion are excluded and reported (`r(N_excluded)`), never ranked silently.
 -   **Ties**: rank 1 is the highest score; tied scores share the same rank.
@@ -39,8 +39,8 @@ The `mcda_topsis` command processes a set of numeric variables and outputs ranki
 
 ## Dialog box
 Type `db mcda_topsis` for a point-and-click dialog:
--   **Criteria tabs** (up to 20 criteria): one row per criterion, with a variable drop-down, a weight field and a **Cost** tick box (ticked = direction -1). Empty rows are skipped.
--   **Options tab**: `if` restriction, domain IDs, names of the generated variables.
+-   **Criteria tabs** (up to 20 criteria): one row per criterion, with a variable drop-down, a weight field, a **Domain** field and a **Cost** tick box (ticked = direction -1). Empty rows are skipped.
+-   **Options tab**: `if` restriction, weights for Domain 1-8 (fill these and the rows' Domain fields instead of row weights), a **Preview weights** button that prints the weights tables without ranking, names of the generated variables.
 -   **OK / Submit / Copy**: rule violations (repeated variable, weights not summing to 1) open an error window; **Submit** keeps the dialog open while you fix them; **Copy** puts the command on the clipboard for your do-file.
 
 To add it to the **User > Statistics** menu, put this in your `profile.do`:
@@ -54,16 +54,20 @@ window menu refresh
 
 ```stata
 mcda_topsis varlist [if] [in] [, options]
+mcda_topsis ([name:] varlist) ([name:] varlist) ... [if] [in], domainweights(numlist) [options]
 ```
+The second form is the weights calculator: each parenthesised group is a domain, `domainweights()` gives one weight per group in the same order, and each domain weight is divided equally among the group's indicators.
 
 ### Options
 
 #### Main
 -   `weights(numlist)`: one weight per criterion; non-negative and summing to 1 (±0.01). Default: 1/k each.
 -   `direction(numlist)`: one direction per criterion, 1 for benefit (higher raises the score), -1 for cost. Default: 1.
--   `domains(numlist)`: one domain ID per criterion; the weight of a domain's first variable is the domain weight and is split equally within the domain. Domain weights must sum to 1.
+-   `domains(numlist)`: one domain ID per criterion.
+-   `domainweights(numlist)`: one weight per domain (ascending domain ID), split equally among the domain's criteria; must sum to 1. Without it, the weight of each domain's first criterion in `weights()` is used; with neither, domains get equal weight. A table of domain weight, number of indicators and weight per indicator is displayed and stored in `r(domains)`.
 
 #### Output
+-   `weightsonly`: show the weights tables (by domain and by criterion) and stop, without scoring; stored in `r(domains)` and `r(criteria)`.
 -   `generate(names)`: Specify names for the generated score and rank variables (default: `topsis_score`, `topsis_rank`).
 
 ## Examples
@@ -74,14 +78,17 @@ sysuse auto, clear
 mcda_topsis mpg price weight, weights(0.4 0.3 0.3) direction(1 -1 -1)
 ```
 
-### 2. Domain-Based Weighting
-In this example, a weight of 0.5 is assigned to Domain 1 (containing `mpg` and `gear_ratio`) and split between them.
+### 2. Weights calculator: domains as groups
+Domain `fuel` (`mpg`, `gear_ratio`) gets 0.6 and domain `cost` (`price`, `weight`) gets 0.4; each is split equally among its indicators (0.3, 0.3, 0.2, 0.2). Preview first, then rank:
 ```stata
-mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)
+mcda_topsis (fuel: mpg gear_ratio) (cost: price weight), domainweights(.6 .4) weightsonly
+mcda_topsis (fuel: mpg gear_ratio) (cost: price weight), domainweights(.6 .4) direction(1 1 -1 -1)
 ```
+Equivalent with domain IDs: `mcda_topsis mpg gear_ratio price weight, domains(1 1 2 2) domainweights(.6 .4) direction(1 1 -1 -1)`.
+The command prints a **Weights by domain** table (domain weight, number of indicators, weight per indicator, with totals) and stores it in `r(domains)`.
 
 ## Stored results
-`r(N)`, `r(N_excluded)`, `r(weights)` (after domain splitting), `r(direction)`.
+`r(N)`, `r(N_excluded)`, `r(weights)` (after domain splitting), `r(direction)`; matrices `r(domains)` (with domains) and `r(criteria)` (with `weightsonly`).
 
 ## Reporting Bugs or Desiderata
 If you encounter any issues or bugs, please open an issue on the [GitHub repository](https://github.com/emawbgit/MCDA/issues). Please include your Stata version and a sample of your data.
