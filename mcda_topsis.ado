@@ -1,7 +1,28 @@
 *! version 1.4.0  23nov2026
-*! Emanuele Clemente, University of Bari "Aldo Moro", eclemente@worldbank.org
+*! Emanuele Clemente, World Bank Group, eclemente@worldbank.org
 program define mcda_topsis, rclass
     version 16.0
+
+    * Domains as parenthesised groups, optionally named: (hazard: a b c) (d e) ...
+    * The group a variable sits in becomes its domain ID, so no IDs need typing
+    local k 0
+    while substr(strtrim(`"`0'"'), 1, 1) == "(" {
+        gettoken grp 0 : 0, match(paren)
+        local ++k
+        local dname `k'
+        if strpos(`"`grp'"', ":") {
+            gettoken dname grp : grp, parse(":")
+            gettoken colon grp : grp, parse(":")
+            local dname = strtoname(strtrim(`"`dname'"'))
+        }
+        unab grp : `grp'
+        local grouped `grouped' `grp'
+        local domnames `domnames' `dname'
+        foreach v of local grp {
+            local domids `domids' `k'
+        }
+    }
+    if (`k' > 0) local 0 `"`grouped' `0'"'
 
     syntax varlist(numeric) [if] [in] [, ///
         Weights(numlist) ///
@@ -9,8 +30,17 @@ program define mcda_topsis, rclass
         DOMains(numlist) /// "d" abbreviates direction() only
         DOMAINWeights(numlist) /// one weight per domain, ascending domain ID
         GENerate(string) ///
+        WEIGHTSOnly /// show the weights tables and stop: a weights calculator
         FROMDIALOG /// undocumented: set by mcda_topsis.dlg so errors also pop up
     ]
+
+    if ("`domids'" != "") {
+        if ("`domains'" != "") {
+            _mcda_err 198 "Give domains either as (groups) or with domains(), not both." `fromdialog'
+        }
+        local domains `domids'
+    }
+    else local domnames
 
     * --- Validation of criteria ---
     local dups : list dups varlist
@@ -110,7 +140,7 @@ program define mcda_topsis, rclass
     * Each domain weight is split equally among its criteria (as in a weights calculator)
     tempname domtab
     if ("`domains'" != "") {
-        mata: split_domain_weights("`weights'", "`domainweights'", "`domains'")
+        mata: split_domain_weights("`weights'", "`domainweights'", "`domains'", "`domnames'")
         local weights `r(weights)'
         matrix `domtab' = r(domtab)
         di _n as text "Weights by domain"
@@ -124,6 +154,25 @@ program define mcda_topsis, rclass
     }
     if (abs(`w_sum' - 1) > 0.01) {
         _mcda_err 198 "Weights must sum to 1 (tolerance 0.01); they sum to `: di %6.4f `w_sum''." `fromdialog'
+    }
+
+    if ("`weightsonly'" != "") {
+        tempname wcrit
+        matrix `wcrit' = J(`n_crit', 1, .)
+        forvalues i = 1/`n_crit' {
+            matrix `wcrit'[`i', 1] = `: word `i' of `weights''
+        }
+        matrix rownames `wcrit' = `criteria'
+        matrix colnames `wcrit' = Weight
+        di _n as text "Weights by criterion"
+        matlist `wcrit', rowtitle(Criterion) format(%9.4g)
+        return scalar N = `n_used'
+        return scalar N_excluded = `n_excl'
+        return local weights "`weights'"
+        return local direction "`direction'"
+        return matrix criteria = `wcrit'
+        if ("`domains'" != "") return matrix domains = `domtab'
+        exit
     }
 
     * --- Core TOPSIS Logic (Mata) ---
@@ -177,7 +226,7 @@ mata:
 // Splits each domain weight equally among its criteria. Domain weights come from
 // domainweights() (one per domain, ascending ID) or, if empty, from the weight of
 // each domain's first criterion in weights(). Posts r(weights) and r(domtab).
-void split_domain_weights(string scalar w_str, string scalar dw_str, string scalar d_str) {
+void split_domain_weights(string scalar w_str, string scalar dw_str, string scalar d_str, string scalar names_str) {
     real rowvector d, u, w, dw, n, idx, final_w
     real scalar i
     string colvector rlab
@@ -198,7 +247,7 @@ void split_domain_weights(string scalar w_str, string scalar dw_str, string scal
         n[i] = cols(idx)
         if (dw_str == "") dw[i] = w[idx[1]]
         final_w[idx] = J(1, n[i], dw[i] / n[i])
-        rlab[i] = strofreal(u[i])
+        rlab[i] = (names_str != "" ? tokens(names_str)[i] : strofreal(u[i]))
     }
 
     st_rclear()

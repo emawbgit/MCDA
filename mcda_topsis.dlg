@@ -1,7 +1,7 @@
 /*
   mcda_topsis.dlg  -- dialog for mcda_topsis (open with: db mcda_topsis)
   *! version 1.4.0  23nov2026
-  *! Emanuele Clemente, University of Bari "Aldo Moro", eclemente@worldbank.org
+  *! Emanuele Clemente, World Bank Group, eclemente@worldbank.org
   One row per criterion: pick a variable, type its weight (or its domain ID and
   set domain weights on the Options tab), tick Cost if higher values should
   LOWER the score (impact -). Empty rows are ignored.
@@ -131,11 +131,28 @@ DIALOG opt, tabtitle("Options")
 BEGIN
   TEXT tx_if  10  10 500 ., label("Restrict to observations (if expression, optional):")
   EDIT ed_if  10  30 500 ., label("if expression")
-  TEXT tx_dw  10  70 500 ., label("Domain weights, one per domain in ascending domain ID (optional):")
-  EDIT ed_dw  10  90 300 ., label("Domain weights") option(domainweights)
-  TEXT tx_dw2 10 112 500 ., label("Each domain weight is split equally among its rows; row weights are then ignored.")
-  TEXT tx_gen 10 150 500 ., label("Names for the score and rank variables (optional):")
-  EDIT ed_gen 10 170 300 ., label("Score and rank names") option(generate)
+  TEXT tx_dw  10  70 520 ., label("Domain weights (optional): weight of the domain typed in each row's Domain field.")
+  TEXT tx_dw2 10  88 520 ., label("Each is split equally among its rows (row weights then not needed). Must sum to 1.")
+  TEXT tx_dwl1 10 115 120 ., label("Domain 1")
+  EDIT ed_dw1 10 133 110 ., numonly label("Domain 1 weight")
+  TEXT tx_dwl2 140 115 120 ., label("Domain 2")
+  EDIT ed_dw2 140 133 110 ., numonly label("Domain 2 weight")
+  TEXT tx_dwl3 270 115 120 ., label("Domain 3")
+  EDIT ed_dw3 270 133 110 ., numonly label("Domain 3 weight")
+  TEXT tx_dwl4 400 115 120 ., label("Domain 4")
+  EDIT ed_dw4 400 133 110 ., numonly label("Domain 4 weight")
+  TEXT tx_dwl5 10 160 120 ., label("Domain 5")
+  EDIT ed_dw5 10 178 110 ., numonly label("Domain 5 weight")
+  TEXT tx_dwl6 140 160 120 ., label("Domain 6")
+  EDIT ed_dw6 140 178 110 ., numonly label("Domain 6 weight")
+  TEXT tx_dwl7 270 160 120 ., label("Domain 7")
+  EDIT ed_dw7 270 178 110 ., numonly label("Domain 7 weight")
+  TEXT tx_dwl8 400 160 120 ., label("Domain 8")
+  EDIT ed_dw8 400 178 110 ., numonly label("Domain 8 weight")
+  BUTTON bu_prev 10 215 160 ., label("Preview weights") onpush(program preview)
+  TEXT tx_prev 180 218 340 ., label("Shows the weights tables in the Results window.")
+  TEXT tx_gen 10 255 500 ., label("Names for the score and rank variables (optional):")
+  EDIT ed_gen 10 275 300 ., label("Score and rank names") option(generate)
 END
 
 OK ok1,      label("OK")
@@ -153,9 +170,33 @@ BEGIN
     put " if " opt.ed_if
   }
   beginoptions
-    if opt.ed_dw {
-      optionarg opt.ed_dw
-      put " "
+    if opt.ed_dw1 {
+      put "domainweights("
+      if opt.ed_dw1 {
+        put opt.ed_dw1 " "
+      }
+      if opt.ed_dw2 {
+        put opt.ed_dw2 " "
+      }
+      if opt.ed_dw3 {
+        put opt.ed_dw3 " "
+      }
+      if opt.ed_dw4 {
+        put opt.ed_dw4 " "
+      }
+      if opt.ed_dw5 {
+        put opt.ed_dw5 " "
+      }
+      if opt.ed_dw6 {
+        put opt.ed_dw6 " "
+      }
+      if opt.ed_dw7 {
+        put opt.ed_dw7 " "
+      }
+      if opt.ed_dw8 {
+        put opt.ed_dw8 " "
+      }
+      put ") "
     }
     else {
       put "weights("
@@ -470,4 +511,356 @@ BEGIN
     optionarg opt.ed_gen
     put " fromdialog"
   endoptions
+END
+
+PROGRAM preview
+BEGIN
+  put "mcda_topsis "
+  varlist main.vn_1 [main.vn_2] [main.vn_3] [main.vn_4] [main.vn_5] [main.vn_6] [main.vn_7] [main.vn_8] [main.vn_9] [main.vn_10] [more.vn_11] [more.vn_12] [more.vn_13] [more.vn_14] [more.vn_15] [more.vn_16] [more.vn_17] [more.vn_18] [more.vn_19] [more.vn_20]
+  if opt.ed_if {
+    put " if " opt.ed_if
+  }
+  beginoptions
+    if opt.ed_dw1 {
+      put "domainweights("
+      if opt.ed_dw1 {
+        put opt.ed_dw1 " "
+      }
+      if opt.ed_dw2 {
+        put opt.ed_dw2 " "
+      }
+      if opt.ed_dw3 {
+        put opt.ed_dw3 " "
+      }
+      if opt.ed_dw4 {
+        put opt.ed_dw4 " "
+      }
+      if opt.ed_dw5 {
+        put opt.ed_dw5 " "
+      }
+      if opt.ed_dw6 {
+        put opt.ed_dw6 " "
+      }
+      if opt.ed_dw7 {
+        put opt.ed_dw7 " "
+      }
+      if opt.ed_dw8 {
+        put opt.ed_dw8 " "
+      }
+      put ") "
+    }
+    else {
+      put "weights("
+      if main.vn_1 {
+        require main.ed_w1
+        put main.ed_w1 " "
+      }
+      if main.vn_2 {
+        require main.ed_w2
+        put main.ed_w2 " "
+      }
+      if main.vn_3 {
+        require main.ed_w3
+        put main.ed_w3 " "
+      }
+      if main.vn_4 {
+        require main.ed_w4
+        put main.ed_w4 " "
+      }
+      if main.vn_5 {
+        require main.ed_w5
+        put main.ed_w5 " "
+      }
+      if main.vn_6 {
+        require main.ed_w6
+        put main.ed_w6 " "
+      }
+      if main.vn_7 {
+        require main.ed_w7
+        put main.ed_w7 " "
+      }
+      if main.vn_8 {
+        require main.ed_w8
+        put main.ed_w8 " "
+      }
+      if main.vn_9 {
+        require main.ed_w9
+        put main.ed_w9 " "
+      }
+      if main.vn_10 {
+        require main.ed_w10
+        put main.ed_w10 " "
+      }
+      if more.vn_11 {
+        require more.ed_w11
+        put more.ed_w11 " "
+      }
+      if more.vn_12 {
+        require more.ed_w12
+        put more.ed_w12 " "
+      }
+      if more.vn_13 {
+        require more.ed_w13
+        put more.ed_w13 " "
+      }
+      if more.vn_14 {
+        require more.ed_w14
+        put more.ed_w14 " "
+      }
+      if more.vn_15 {
+        require more.ed_w15
+        put more.ed_w15 " "
+      }
+      if more.vn_16 {
+        require more.ed_w16
+        put more.ed_w16 " "
+      }
+      if more.vn_17 {
+        require more.ed_w17
+        put more.ed_w17 " "
+      }
+      if more.vn_18 {
+        require more.ed_w18
+        put more.ed_w18 " "
+      }
+      if more.vn_19 {
+        require more.ed_w19
+        put more.ed_w19 " "
+      }
+      if more.vn_20 {
+        require more.ed_w20
+        put more.ed_w20 " "
+      }
+      put ") "
+    }
+    put "direction("
+    if main.vn_1 {
+      if main.ck_c1 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_2 {
+      if main.ck_c2 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_3 {
+      if main.ck_c3 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_4 {
+      if main.ck_c4 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_5 {
+      if main.ck_c5 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_6 {
+      if main.ck_c6 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_7 {
+      if main.ck_c7 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_8 {
+      if main.ck_c8 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_9 {
+      if main.ck_c9 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if main.vn_10 {
+      if main.ck_c10 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_11 {
+      if more.ck_c11 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_12 {
+      if more.ck_c12 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_13 {
+      if more.ck_c13 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_14 {
+      if more.ck_c14 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_15 {
+      if more.ck_c15 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_16 {
+      if more.ck_c16 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_17 {
+      if more.ck_c17 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_18 {
+      if more.ck_c18 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_19 {
+      if more.ck_c19 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    if more.vn_20 {
+      if more.ck_c20 {
+        put "-1 "
+      }
+      else {
+        put "1 "
+      }
+    }
+    put ") "
+    if main.ed_d1 {
+      put "domains("
+      if main.vn_1 {
+        put main.ed_d1 " "
+      }
+      if main.vn_2 {
+        put main.ed_d2 " "
+      }
+      if main.vn_3 {
+        put main.ed_d3 " "
+      }
+      if main.vn_4 {
+        put main.ed_d4 " "
+      }
+      if main.vn_5 {
+        put main.ed_d5 " "
+      }
+      if main.vn_6 {
+        put main.ed_d6 " "
+      }
+      if main.vn_7 {
+        put main.ed_d7 " "
+      }
+      if main.vn_8 {
+        put main.ed_d8 " "
+      }
+      if main.vn_9 {
+        put main.ed_d9 " "
+      }
+      if main.vn_10 {
+        put main.ed_d10 " "
+      }
+      if more.vn_11 {
+        put more.ed_d11 " "
+      }
+      if more.vn_12 {
+        put more.ed_d12 " "
+      }
+      if more.vn_13 {
+        put more.ed_d13 " "
+      }
+      if more.vn_14 {
+        put more.ed_d14 " "
+      }
+      if more.vn_15 {
+        put more.ed_d15 " "
+      }
+      if more.vn_16 {
+        put more.ed_d16 " "
+      }
+      if more.vn_17 {
+        put more.ed_d17 " "
+      }
+      if more.vn_18 {
+        put more.ed_d18 " "
+      }
+      if more.vn_19 {
+        put more.ed_d19 " "
+      }
+      if more.vn_20 {
+        put more.ed_d20 " "
+      }
+      put ") "
+    }
+    optionarg opt.ed_gen
+    put " fromdialog weightsonly"
+  endoptions
+  stata
 END

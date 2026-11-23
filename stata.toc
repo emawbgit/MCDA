@@ -1,6 +1,6 @@
 v 1.0.0
 d MCDA: Multi-Criteria Decision Analysis Toolkit
-d Emanuele Clemente, University of Bari "Aldo Moro", eclemente@worldbank.org
+d Emanuele Clemente, World Bank Group, eclemente@worldbank.org
 d
 d Distribution-Date: 20261119
 d
