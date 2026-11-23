@@ -95,7 +95,8 @@ If you encounter any issues or bugs, please open an issue on the [GitHub reposit
 
 ## Author
 Emanuele Clemente
-World Bank Group
+
+The World Bank Group
 ([eclemente@worldbank.org](mailto:eclemente@worldbank.org))
 
 ## License
