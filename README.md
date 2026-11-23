@@ -31,7 +31,7 @@ The `mcda_topsis` command processes a set of numeric variables and outputs ranki
 
 ### Key Features:
 -   **Min-Max Normalization**: Automatically standardizes criteria to a 0-1 scale.
--   **Domain Weighting**: Allows weights to be assigned to groups of variables (domains), which are then automatically split among members.
+-   **Domain Weighting**: give one weight per domain with `domainweights()`; it is split equally among the domain's criteria and shown in a weights table.
 -   **Flexible Directionality**: Easily specify "benefit" criteria (higher is better) vs "cost" criteria (lower is better).
 -   **Missing values**: observations with a missing criterion are excluded and reported (`r(N_excluded)`), never ranked silently.
 -   **Ties**: rank 1 is the highest score; tied scores share the same rank.
@@ -39,8 +39,8 @@ The `mcda_topsis` command processes a set of numeric variables and outputs ranki
 
 ## Dialog box
 Type `db mcda_topsis` for a point-and-click dialog:
--   **Criteria tabs** (up to 20 criteria): one row per criterion, with a variable drop-down, a weight field and a **Cost** tick box (ticked = direction -1). Empty rows are skipped.
--   **Options tab**: `if` restriction, domain IDs, names of the generated variables.
+-   **Criteria tabs** (up to 20 criteria): one row per criterion, with a variable drop-down, a weight field, a **Domain** field and a **Cost** tick box (ticked = direction -1). Empty rows are skipped.
+-   **Options tab**: `if` restriction, domain weights (fill these and the rows' Domain fields instead of row weights), names of the generated variables.
 -   **OK / Submit / Copy**: rule violations (repeated variable, weights not summing to 1) open an error window; **Submit** keeps the dialog open while you fix them; **Copy** puts the command on the clipboard for your do-file.
 
 To add it to the **User > Statistics** menu, put this in your `profile.do`:
@@ -61,7 +61,8 @@ mcda_topsis varlist [if] [in] [, options]
 #### Main
 -   `weights(numlist)`: one weight per criterion; non-negative and summing to 1 (±0.01). Default: 1/k each.
 -   `direction(numlist)`: one direction per criterion, 1 for benefit (higher raises the score), -1 for cost. Default: 1.
--   `domains(numlist)`: one domain ID per criterion; the weight of a domain's first variable is the domain weight and is split equally within the domain. Domain weights must sum to 1.
+-   `domains(numlist)`: one domain ID per criterion.
+-   `domainweights(numlist)`: one weight per domain (ascending domain ID), split equally among the domain's criteria; must sum to 1. Without it, the weight of each domain's first criterion in `weights()` is used; with neither, domains get equal weight. A table of domain weight, number of indicators and weight per indicator is displayed and stored in `r(domains)`.
 
 #### Output
 -   `generate(names)`: Specify names for the generated score and rank variables (default: `topsis_score`, `topsis_rank`).
@@ -74,14 +75,15 @@ sysuse auto, clear
 mcda_topsis mpg price weight, weights(0.4 0.3 0.3) direction(1 -1 -1)
 ```
 
-### 2. Domain-Based Weighting
-In this example, a weight of 0.5 is assigned to Domain 1 (containing `mpg` and `gear_ratio`) and split between them.
+### 2. Domain weights
+Domain 1 (`mpg`, `gear_ratio`) gets 0.6 and domain 2 (`price`, `weight`) gets 0.4; each is split equally among its criteria (0.3, 0.3, 0.2, 0.2), as in a weights calculator spreadsheet.
 ```stata
-mcda_topsis mpg gear_ratio price, weights(0.5 0.5 0.5) domains(1 1 2)
+mcda_topsis mpg gear_ratio price weight, domains(1 1 2 2) domainweights(0.6 0.4) direction(1 1 -1 -1)
 ```
+The command prints a **Weights by domain** table (domain weight, number of indicators, weight per indicator, with totals) and stores it in `r(domains)`.
 
 ## Stored results
-`r(N)`, `r(N_excluded)`, `r(weights)` (after domain splitting), `r(direction)`.
+`r(N)`, `r(N_excluded)`, `r(weights)` (after domain splitting), `r(direction)`, and with domains the matrix `r(domains)`.
 
 ## Reporting Bugs or Desiderata
 If you encounter any issues or bugs, please open an issue on the [GitHub repository](https://github.com/emawbgit/MCDA/issues). Please include your Stata version and a sample of your data.
